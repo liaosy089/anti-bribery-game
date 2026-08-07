@@ -196,6 +196,12 @@
 
   .cert-section{width:100%;max-width:420px;margin:22px 0 6px 0;display:flex;flex-direction:column;align-items:center;}
   .cert-intro{font-size:12.5px;color:rgba(242,232,213,.75);margin-bottom:10px;line-height:1.6;}
+  .cert-fields{display:flex;flex-direction:column;gap:8px;width:100%;margin-bottom:12px;}
+  .cert-fields input{
+    width:100%;padding:11px 13px;border-radius:6px;border:1px solid rgba(212,160,23,.5);
+    background:rgba(242,232,213,.95);color:var(--ink);font-size:14px;font-family:'Noto Sans TC',sans-serif;
+  }
+  .cert-main-btn{width:100%;padding:12px 16px;font-size:15px;}
   .cert-input-row{display:flex;gap:8px;width:100%;margin-bottom:14px;}
   .cert-input-row input{
     flex:1;min-width:0;padding:9px 12px;border-radius:6px;border:1px solid rgba(212,160,23,.5);
@@ -203,9 +209,7 @@
   }
   .cert-input-row button{padding:9px 16px;font-size:13px;box-shadow:0 5px 0 #8a6e10, 0 8px 14px rgba(0,0,0,.3);white-space:nowrap;}
   .cert-input-row button:active{transform:translateY(4px);box-shadow:0 1px 0 #8a6e10, 0 2px 6px rgba(0,0,0,.25);}
-  #cert-submit-block{width:100%;margin-top:16px;}
-  .cert-submit-title{font-size:13px;color:var(--gold-soft);font-weight:700;margin-bottom:8px;letter-spacing:.03em;}
-  .cert-privacy{
+  .cert-privacy{margin-top:14px;
     font-size:10.5px;line-height:1.75;color:rgba(242,232,213,.6);text-align:left;
     background:rgba(0,0,0,.18);border-left:2px solid rgba(212,160,23,.45);
     padding:8px 10px;border-radius:4px;
@@ -433,11 +437,14 @@
     <div class="hotline-note">檢舉人身分絕對保密・最高可獲高額檢舉獎金</div>
 
     <div class="cert-section">
-      <div class="cert-intro">完成任務後，可以截圖下方完成證明，到政風室兌換宣導小禮物</div>
-      <div class="cert-input-row">
-        <input type="text" id="cert-name-input" placeholder="輸入姓名或暱稱（選填）" maxlength="20">
-        <button class="primary-btn" id="cert-generate-btn">產生完成證明</button>
+      <div class="cert-intro">填寫下列資料後，即可產生完成證明並登記，憑截圖至政風室兌換宣導小禮物</div>
+      <div class="cert-fields">
+        <input type="text" id="cert-name-input" placeholder="姓名" maxlength="20">
+        <input type="tel" id="cert-ext-input" placeholder="辦公室分機" maxlength="10" inputmode="numeric">
       </div>
+      <button class="primary-btn cert-main-btn" id="cert-generate-btn">產生完成證明並登記</button>
+      <div class="cert-status" id="cert-status"></div>
+
       <div id="cert-card" class="cert-card" style="display:none;">
         <div class="cert-seal">驗訖</div>
         <div class="cert-header">清水里反賄選任務・完成證明</div>
@@ -449,19 +456,11 @@
         <div class="cert-footer">請截圖本畫面，至政風室兌換宣導小禮物</div>
       </div>
 
-      <div id="cert-submit-block" style="display:none;">
-        <div class="cert-submit-title">登記完成紀錄（供兌獎統計）</div>
-        <div class="cert-input-row">
-          <input type="email" id="cert-email-input" placeholder="請輸入電子郵件" maxlength="80">
-          <button class="primary-btn" id="cert-submit-btn">送出登記</button>
-        </div>
-        <div class="cert-privacy" id="cert-privacy">
-          【蒐集個人資料告知事項】本表單由桃園市政府文化局政風室蒐集您的姓名與電子郵件，
-          僅供本次反賄選宣導活動之兌獎核對與成效統計，保存至活動結束後 6 個月即銷毀。
-          您可依個人資料保護法第 3 條規定，向本室行使查詢、更正或刪除等權利。
-          聯絡窗口：(03)3322-592（分機 8051）。
-        </div>
-        <div class="cert-status" id="cert-status"></div>
+      <div class="cert-privacy" id="cert-privacy">
+        【蒐集個人資料告知事項】本表單由桃園市政府文化局政風室蒐集您的姓名與辦公室分機，
+        僅供本次反賄選宣導活動之兌獎核對與成效統計，保存至活動結束後 6 個月即銷毀。
+        您可依個人資料保護法第 3 條規定，向本室行使查詢、更正或刪除等權利。
+        聯絡窗口：(03)3322-592（分機 8051）。
       </div>
     </div>
 
@@ -490,7 +489,7 @@
      ★ 設定區：填完成績登記用的 Google 表單資訊（詳細步驟見交付說明）
      --------------------------------------------------------------------------
      1. 建立一份 Google 表單，依序新增這 5 個「簡答」題目：
-          姓名 / 電子郵件 / 完成日期 / 考驗成績 / 成就等級 / 任務代號
+          姓名 / 辦公室分機 / 完成日期 / 考驗成績 / 成就等級 / 任務代號
      2. 取得表單的 formResponse 網址與各題的 entry ID，填入下方。
      3. 只要 FORM_ACTION 留空，登記功能就會自動隱藏，遊戲照常運作。
      ========================================================================== */
@@ -498,7 +497,7 @@
     FORM_ACTION: 'https://docs.google.com/forms/d/e/1FAIpQLSdMIClkwgl3Cl-Q_ZP5qrElPo0FGtGICgRa4SIqTFPEThEJ4Q/formResponse',
     FIELDS: {
       name:  'entry.423673166',    // 姓名
-      email: 'entry.532893809',    // 電子郵件
+      ext:   'entry.532893809',    // 辦公室分機
       date:  'entry.809787697',    // 完成日期
       score: 'entry.2072446636',   // 考驗成績
       tier:  'entry.967657147',    // 成就等級
@@ -635,7 +634,7 @@
    'pause-layer','pause-toggle','resume-btn','restart-btn','replay-btn',
    'end-title','end-score','end-badge','end-note',
    'cert-name-input','cert-generate-btn','cert-card','cert-name','cert-date','cert-score','cert-tier','cert-code',
-   'cert-submit-block','cert-email-input','cert-submit-btn','cert-status',
+   'cert-ext-input','cert-status',
    'mobile-controls','interact-btn'
   ].forEach(function(id){ el[id.replace(/-([a-z])/g,function(m,c){return c.toUpperCase();})] = document.getElementById(id); });
 
@@ -1859,13 +1858,14 @@
     el.endNote.textContent = tier.note;
     el.endScore.textContent = '結案考驗成績：'+quizCorrect+' / '+quizItems.length+' 題正確';
     el.certCard.style.display = 'none';
-    el.certNameInput.value = '';
-    el.certSubmitBlock.style.display = 'none';
     el.certStatus.textContent = '';
     el.certStatus.className = 'cert-status';
-    el.certSubmitBtn.disabled = false;
-    el.certEmailInput.disabled = false;
-    el.certEmailInput.value = '';
+    el.certNameInput.value = '';
+    el.certNameInput.disabled = false;
+    el.certExtInput.value = '';
+    el.certExtInput.disabled = false;
+    el.certGenerateBtn.disabled = false;
+    el.certGenerateBtn.textContent = '產生完成證明並登記';
     certSubmitted = false;
     lastCertData = null;
     showScreen('end-screen');
@@ -1881,11 +1881,15 @@
   var certSubmitted = false;
 
   function submitConfigured(){
-    return !!(SUBMIT_CONFIG.FORM_ACTION && SUBMIT_CONFIG.FIELDS && SUBMIT_CONFIG.FIELDS.email);
+    return !!(SUBMIT_CONFIG.FORM_ACTION && SUBMIT_CONFIG.FIELDS && SUBMIT_CONFIG.FIELDS.ext);
   }
 
-  el.certGenerateBtn.addEventListener('click', function(){
-    var name = el.certNameInput.value.trim() || '匿名同仁';
+  function setCertStatus(msg, kind){
+    el.certStatus.textContent = msg;
+    el.certStatus.className = 'cert-status' + (kind ? ' '+kind : '');
+  }
+
+  function renderCertificate(name){
     var now = new Date();
     var dateStr = now.getFullYear()+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0');
     var scoreStr = quizCorrect+' / '+quizItems.length+' 題正確';
@@ -1898,36 +1902,47 @@
     el.certCode.textContent = '任務代號：'+code;
     el.certCard.style.display = 'block';
     lastCertData = {name:name, date:dateStr, score:scoreStr, tier:tierShort, code:code};
-    if(submitConfigured() && !certSubmitted){
-      el.certSubmitBlock.style.display = 'block';
-    }
-    el.certCard.scrollIntoView({behavior:'smooth', block:'center'});
-  });
-
-  function setCertStatus(msg, kind){
-    el.certStatus.textContent = msg;
-    el.certStatus.className = 'cert-status' + (kind ? ' '+kind : '');
+    return lastCertData;
   }
 
-  el.certSubmitBtn.addEventListener('click', function(){
+  // Single step: validate, render the certificate, and register in one action.
+  el.certGenerateBtn.addEventListener('click', function(){
     if(certSubmitted) return;
-    if(!lastCertData){ setCertStatus('請先產生完成證明。','err'); return; }
-    var email = el.certEmailInput.value.trim();
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-      setCertStatus('請輸入正確的電子郵件格式。','err');
+
+    var name = el.certNameInput.value.trim();
+    var ext = el.certExtInput.value.trim();
+    var needExt = submitConfigured();
+
+    if(!name){
+      setCertStatus('請輸入姓名。','err');
+      el.certNameInput.focus();
       return;
     }
-    el.certSubmitBtn.disabled = true;
+    if(needExt && !/^[0-9#\-]{2,10}$/.test(ext)){
+      setCertStatus('請輸入辦公室分機（數字）。','err');
+      el.certExtInput.focus();
+      return;
+    }
+
+    var data = renderCertificate(name);
+
+    if(!needExt){
+      setCertStatus('');
+      el.certCard.scrollIntoView({behavior:'smooth', block:'center'});
+      return;
+    }
+
+    el.certGenerateBtn.disabled = true;
     setCertStatus('登記中…');
 
     var f = SUBMIT_CONFIG.FIELDS;
     var body = new URLSearchParams();
-    if(f.name)  body.append(f.name,  lastCertData.name);
-    if(f.email) body.append(f.email, email);
-    if(f.date)  body.append(f.date,  lastCertData.date);
-    if(f.score) body.append(f.score, lastCertData.score);
-    if(f.tier)  body.append(f.tier,  lastCertData.tier);
-    if(f.code)  body.append(f.code,  lastCertData.code);
+    if(f.name)  body.append(f.name,  data.name);
+    if(f.ext)   body.append(f.ext,   ext);
+    if(f.date)  body.append(f.date,  data.date);
+    if(f.score) body.append(f.score, data.score);
+    if(f.tier)  body.append(f.tier,  data.tier);
+    if(f.code)  body.append(f.code,  data.code);
 
     // Google Forms doesn't send CORS headers, so the response can't be read.
     // no-cors still delivers the submission; we treat completion as success.
@@ -1938,12 +1953,15 @@
       body: body.toString()
     }).then(function(){
       certSubmitted = true;
-      setCertStatus('✅ 登記完成，感謝參與！請截圖上方完成證明至政風室兌獎。','ok');
-      el.certEmailInput.disabled = true;
+      setCertStatus('✅ 登記完成，感謝參與！請截圖下方完成證明至政風室兌獎。','ok');
+      el.certNameInput.disabled = true;
+      el.certExtInput.disabled = true;
+      el.certGenerateBtn.textContent = '已完成登記';
+      el.certCard.scrollIntoView({behavior:'smooth', block:'center'});
     }).catch(function(err){
       console.error('submit failed', err);
-      el.certSubmitBtn.disabled = false;
-      setCertStatus('⚠️ 登記失敗，請確認網路後再試一次，或直接截圖完成證明兌獎。','err');
+      el.certGenerateBtn.disabled = false;
+      setCertStatus('⚠️ 登記失敗，請確認網路後再按一次。','err');
     });
   });
 

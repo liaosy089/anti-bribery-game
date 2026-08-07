@@ -867,7 +867,7 @@
 
   function addQuestArrow(code, x, z){
     var arrow = makeQuestArrow();
-    var baseY = 2.45;
+    var baseY = 3.15;
     arrow.position.set(x, baseY, z);
     scene.add(arrow);
     questArrows[code] = {group:arrow, baseY:baseY};
@@ -932,11 +932,11 @@
       emissive:0x9a6b00, emissiveIntensity:0.7
     });
     // arrow lying flat, pointing along +Z; we spin the group to aim it
-    var shaft = new THREE.Mesh(new THREE.BoxGeometry(0.17,0.11,0.52), mat);
-    shaft.position.z = -0.18;
+    var shaft = new THREE.Mesh(new THREE.BoxGeometry(0.24,0.16,0.72), mat);
+    shaft.position.z = -0.25;
     g.add(shaft);
-    var head = new THREE.Mesh(new THREE.ConeGeometry(0.26,0.44,4), mat);
-    head.position.z = 0.30;
+    var head = new THREE.Mesh(new THREE.ConeGeometry(0.36,0.60,4), mat);
+    head.position.z = 0.42;
     head.rotation.x = Math.PI/2;
     head.rotation.y = Math.PI/4;
     g.add(head);
@@ -956,7 +956,7 @@
     var t = clock.elapsedTime;
     guideArrow.position.set(
       playerGroup.position.x,
-      2.35 + Math.sin(t*3.0)*0.10,
+      3.55 + Math.sin(t*3.0)*0.16,
       playerGroup.position.z
     );
     // aim at the gate

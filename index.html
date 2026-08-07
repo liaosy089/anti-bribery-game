@@ -1,0 +1,1997 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>反賄選任務：清水里的乾淨一票</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-night:#1b2340;
+    --bg-night-2:#252d52;
+    --lantern-red:#c23616;
+    --lantern-red-2:#e05a3c;
+    --gold:#d4a017;
+    --gold-soft:#e8c76b;
+    --paper:#f2e8d5;
+    --paper-2:#e7d9b8;
+    --ink:#2b2620;
+    --leaf-green:#4c7a51;
+    --wrong:#8e2a2a;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;height:100dvh;
+    background:var(--bg-night);overflow:hidden;
+    font-family:'Noto Sans TC',sans-serif;color:var(--paper);
+    overscroll-behavior:none;
+  }
+  #app{position:relative;width:100vw;height:100vh;height:100dvh;display:flex;align-items:center;justify-content:center;}
+
+  .screen{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;}
+  .screen.active{display:flex;}
+
+  /* ---------- Title screen ---------- */
+  #title-screen{
+    background:
+      radial-gradient(circle at 50% 18%, rgba(212,160,23,0.18), transparent 55%),
+      linear-gradient(180deg, var(--bg-night) 0%, var(--bg-night-2) 100%);
+    text-align:center;
+    padding:24px;
+  }
+  .lantern-row{display:flex;gap:18px;margin-bottom:10px;}
+  .lantern{width:22px;height:30px;background:linear-gradient(180deg,var(--lantern-red-2),var(--lantern-red));border-radius:50% 50% 45% 45%;position:relative;box-shadow:0 0 14px rgba(226,90,60,.55);}
+  .lantern::before{content:"";position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:2px;height:8px;background:var(--gold-soft);}
+  .eyebrow{letter-spacing:.35em;font-size:12px;color:var(--gold-soft);margin-bottom:10px;font-weight:500;}
+  h1.game-title{
+    font-family:'Noto Serif TC',serif;
+    font-weight:900;
+    font-size:clamp(32px,7vw,56px);
+    margin:0 0 6px 0;
+    color:var(--paper);
+    text-shadow:0 0 22px rgba(212,160,23,.35);
+    letter-spacing:.04em;
+  }
+  .subtitle{font-family:'Noto Serif TC',serif;font-size:clamp(15px,3vw,19px);color:var(--gold-soft);margin-bottom:26px;}
+  .brief-card{
+    background:var(--paper);color:var(--ink);border-radius:6px;padding:18px 22px;max-width:420px;
+    font-size:14px;line-height:1.9;text-align:left;margin-bottom:26px;position:relative;
+    box-shadow:0 12px 30px rgba(0,0,0,.35);
+  }
+  .brief-card::before{content:"密件";position:absolute;top:-11px;right:14px;background:var(--lantern-red);color:#fff;font-size:11px;padding:3px 10px;border-radius:3px;letter-spacing:.15em;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+  .stamp{color:var(--lantern-red);font-weight:700;}
+  button.primary-btn{
+    font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;
+    background:var(--gold);color:#241a04;border:none;border-radius:4px;
+    padding:13px 42px;cursor:pointer;letter-spacing:.12em;
+    box-shadow:0 8px 0 #8a6e10, 0 12px 20px rgba(0,0,0,.35);
+    transition:transform .08s ease;
+  }
+  button.primary-btn:active{transform:translateY(6px);box-shadow:0 2px 0 #8a6e10, 0 4px 10px rgba(0,0,0,.3);}
+  button.primary-btn:disabled{opacity:.55;cursor:wait;box-shadow:0 8px 0 #8a6e10, 0 12px 20px rgba(0,0,0,.35);}
+  button.primary-btn:disabled:active{transform:none;}
+  button.ghost-btn{
+    margin-top:14px;background:transparent;border:1px solid rgba(242,232,213,.4);color:var(--paper);
+    font-family:'Noto Sans TC',sans-serif;font-size:13px;padding:8px 22px;border-radius:20px;cursor:pointer;
+  }
+  .controls-hint{margin-top:22px;font-size:12px;color:rgba(242,232,213,.65);line-height:1.8;}
+
+  /* ---------- HUD ---------- */
+  #hud{
+    position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;
+    padding:12px 14px;pointer-events:none;z-index:20;
+  }
+  #objective{
+    background:rgba(27,35,64,.82);border:1px solid var(--gold);border-radius:6px;padding:8px 14px;
+    font-size:13px;max-width:60%;line-height:1.5;
+  }
+  #objective b{color:var(--gold-soft);}
+  #evidence-badge{
+    background:var(--paper);color:var(--ink);border-radius:6px;padding:8px 12px;font-size:12px;font-weight:700;
+    display:flex;align-items:center;gap:6px;box-shadow:0 6px 14px rgba(0,0,0,.3);pointer-events:auto;cursor:pointer;
+  }
+  #evidence-badge span.icon{font-size:16px;}
+
+  /* ---------- Game 3D viewport ---------- */
+  #game-screen{background:#0e1220;}
+  #three-wrap{position:absolute;inset:0;}
+  #three-wrap canvas{display:block;width:100%;height:100%;}
+  #scene-hint{
+    position:absolute;bottom:16px;right:16px;background:rgba(27,35,64,.72);border:1px solid rgba(212,160,23,.5);
+    color:var(--gold-soft);font-size:11px;padding:6px 10px;border-radius:6px;pointer-events:none;
+  }
+
+  /* ---------- Dialogue ---------- */
+  #dialogue-layer{position:absolute;inset:0;display:none;align-items:flex-end;justify-content:center;z-index:30;overflow:hidden;}
+  #dialogue-layer.active{display:flex;}
+  #vn-scrim{position:absolute;inset:0;background:linear-gradient(180deg, rgba(10,12,24,0) 40%, rgba(10,12,24,.55) 78%, rgba(10,12,24,.75) 100%);}
+  #dialogue-box{
+    position:relative;width:min(700px,94vw);margin-bottom:3.4vh;background:var(--paper);color:var(--ink);
+    border-radius:12px;padding:22px 24px 20px;
+    background-image:
+      linear-gradient(var(--paper),var(--paper)),
+      repeating-linear-gradient(135deg, rgba(43,38,32,.025) 0 2px, transparent 2px 6px);
+    background-blend-mode:normal;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset, 0 22px 45px rgba(0,0,0,.5);
+    border:1px solid rgba(212,160,23,.5);
+    z-index:2;
+  }
+  #dialogue-box::before, #dialogue-box::after{
+    content:"";position:absolute;width:20px;height:20px;border:2px solid var(--gold);opacity:.7;
+  }
+  #dialogue-box::before{top:6px;left:6px;border-right:none;border-bottom:none;}
+  #dialogue-box::after{bottom:6px;right:6px;border-left:none;border-top:none;}
+  #dialogue-speaker{
+    position:absolute;top:-18px;left:20px;background:var(--lantern-red);color:#fff;font-weight:700;font-size:13.5px;
+    padding:6px 18px;border-radius:3px;box-shadow:0 4px 10px rgba(0,0,0,.35);font-family:'Noto Serif TC',serif;
+    letter-spacing:.05em;
+  }
+  #dialogue-speaker::after{
+    content:"";position:absolute;bottom:-6px;left:10px;border-width:6px 6px 0 0;border-style:solid;
+    border-color:#7a1c0f transparent transparent transparent;
+  }
+  #dialogue-text{font-size:15.5px;line-height:1.85;margin:12px 0 16px 0;min-height:3.6em;position:relative;}
+  #dialogue-text .caret{display:inline-block;width:2px;background:var(--ink);margin-left:1px;animation:blink 1s step-end infinite;}
+  @keyframes blink{50%{opacity:0;}}
+  #dialogue-choices{display:flex;flex-direction:column;gap:8px;}
+  .choice-btn{
+    text-align:left;background:var(--paper-2);border:1px solid rgba(43,38,32,.15);border-radius:6px;
+    padding:10px 14px 10px 34px;font-size:14px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;color:var(--ink);
+    transition:background .15s ease, transform .1s ease;position:relative;
+  }
+  .choice-btn::before{content:"›";position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--lantern-red);font-weight:700;font-size:16px;}
+  .choice-btn:hover{background:#dccb9e;transform:translateX(2px);}
+  .choice-btn.correct{background:var(--leaf-green);color:#fff;border-color:transparent;}
+  .choice-btn.wrong{background:var(--wrong);color:#fff;border-color:transparent;}
+  #dialogue-continue{align-self:flex-end;margin-top:4px;background:var(--gold);border:none;color:#241a04;font-weight:700;padding:8px 20px;border-radius:5px;cursor:pointer;}
+  #feedback-note{font-size:12.5px;color:#5a4b1f;background:#e8dcb8;border-left:3px solid var(--gold);padding:8px 10px;margin-top:10px;border-radius:3px;line-height:1.6;display:none;}
+
+  /* seal stamp feedback */
+  #vn-stamp{
+    position:absolute;left:50%;top:38%;width:150px;height:150px;pointer-events:none;z-index:5;
+    opacity:0;transform:translate(-50%,-50%) scale(2.4) rotate(-14deg);
+  }
+  #vn-stamp.show{animation:stampIn .5s cubic-bezier(.2,1.4,.4,1) forwards;}
+  @keyframes stampIn{
+    0%{opacity:0;transform:translate(-50%,-50%) scale(2.6) rotate(-14deg);}
+    60%{opacity:1;transform:translate(-50%,-50%) scale(.92) rotate(-14deg);}
+    100%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-14deg);}
+  }
+  #vn-stamp svg{width:100%;height:100%;}
+
+  /* ---------- Evidence notebook ---------- */
+  #notebook-layer{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,12,24,.55);z-index:40;}
+  #notebook-layer.active{display:flex;}
+  #notebook{width:min(420px,90vw);background:var(--paper);color:var(--ink);border-radius:10px;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.5);}
+  #notebook h2{font-family:'Noto Serif TC',serif;margin:0 0 4px 0;font-size:19px;}
+  #notebook .sub{font-size:12px;color:#6b5c3f;margin-bottom:14px;}
+  .evidence-item{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed rgba(43,38,32,.2);font-size:13px;line-height:1.6;}
+  .evidence-item .stamp-icon{font-size:18px;}
+  .evidence-item.pending{opacity:.35;}
+  #notebook button{margin-top:16px;width:100%;}
+
+  /* ---------- Quiz ---------- */
+  #quiz-layer{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg,var(--bg-night),#10152a);z-index:50;padding:20px;}
+  #quiz-layer.active{display:flex;}
+  #quiz-box{width:min(560px,94vw);max-height:90vh;overflow-y:auto;background:var(--paper);color:var(--ink);border-radius:10px;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.5);}
+  #quiz-box h2{font-family:'Noto Serif TC',serif;margin:0 0 4px 0;}
+  #quiz-box .sub{font-size:13px;color:#6b5c3f;margin-bottom:16px;}
+  .quiz-item{border:1px solid rgba(43,38,32,.15);border-radius:8px;padding:12px 14px;margin-bottom:12px;}
+  .quiz-item p{margin:0 0 10px 0;font-size:14px;line-height:1.6;}
+  .quiz-opts{display:flex;gap:8px;}
+  .quiz-opt{flex:1;padding:9px;border-radius:6px;border:1px solid rgba(43,38,32,.2);background:var(--paper-2);cursor:pointer;font-size:13px;font-weight:700;}
+  .quiz-opt.legal{color:var(--leaf-green);}
+  .quiz-opt.illegal{color:var(--lantern-red);}
+  .quiz-opt.selected-correct{background:var(--leaf-green);color:#fff;}
+  .quiz-opt.selected-wrong{background:var(--wrong);color:#fff;}
+  .quiz-opt[disabled]{cursor:default;}
+  #quiz-result{font-size:13px;margin-top:6px;display:none;line-height:1.6;background:#e8dcb8;border-left:3px solid var(--gold);padding:8px 10px;border-radius:3px;}
+  #quiz-submit{width:100%;margin-top:6px;}
+
+  /* ---------- End screen ---------- */
+  #end-screen{background:linear-gradient(180deg,var(--bg-night-2),var(--bg-night));text-align:center;padding:24px;}
+  #end-screen h2{font-family:'Noto Serif TC',serif;font-size:clamp(24px,5vw,34px);color:var(--gold-soft);margin-bottom:6px;}
+  .end-score{font-size:14px;color:var(--paper);opacity:.85;margin-bottom:4px;}
+
+  .cert-section{width:100%;max-width:420px;margin:22px 0 6px 0;display:flex;flex-direction:column;align-items:center;}
+  .cert-intro{font-size:12.5px;color:rgba(242,232,213,.75);margin-bottom:10px;line-height:1.6;}
+  .cert-input-row{display:flex;gap:8px;width:100%;margin-bottom:14px;}
+  .cert-input-row input{
+    flex:1;min-width:0;padding:9px 12px;border-radius:6px;border:1px solid rgba(212,160,23,.5);
+    background:rgba(242,232,213,.95);color:var(--ink);font-size:13px;font-family:'Noto Sans TC',sans-serif;
+  }
+  .cert-input-row button{padding:9px 16px;font-size:13px;box-shadow:0 5px 0 #8a6e10, 0 8px 14px rgba(0,0,0,.3);white-space:nowrap;}
+  .cert-input-row button:active{transform:translateY(4px);box-shadow:0 1px 0 #8a6e10, 0 2px 6px rgba(0,0,0,.25);}
+  #cert-submit-block{width:100%;margin-top:16px;}
+  .cert-submit-title{font-size:13px;color:var(--gold-soft);font-weight:700;margin-bottom:8px;letter-spacing:.03em;}
+  .cert-privacy{
+    font-size:10.5px;line-height:1.75;color:rgba(242,232,213,.6);text-align:left;
+    background:rgba(0,0,0,.18);border-left:2px solid rgba(212,160,23,.45);
+    padding:8px 10px;border-radius:4px;
+  }
+  .cert-status{font-size:12.5px;margin-top:10px;min-height:1.2em;line-height:1.6;}
+  .cert-status.ok{color:#8fd39a;}
+  .cert-status.err{color:#f0a08a;}
+
+  .cert-card{
+    position:relative;width:100%;background:var(--paper);color:var(--ink);border-radius:10px;
+    padding:22px 20px 16px;box-shadow:0 16px 36px rgba(0,0,0,.4);
+    border:2px dashed rgba(194,54,22,.4);text-align:left;
+  }
+  .cert-seal{
+    position:absolute;top:14px;right:16px;width:56px;height:56px;border-radius:50%;
+    border:3px solid var(--lantern-red);color:var(--lantern-red);display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Serif TC',serif;font-weight:900;font-size:14px;transform:rotate(-14deg);
+    opacity:.85;letter-spacing:.05em;
+  }
+  .cert-header{font-family:'Noto Serif TC',serif;font-weight:700;font-size:15px;color:var(--lantern-red);margin-bottom:10px;padding-right:60px;}
+  .cert-name{font-family:'Noto Serif TC',serif;font-weight:900;font-size:22px;margin-bottom:12px;}
+  .cert-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px dashed rgba(43,38,32,.18);}
+  .cert-row span:first-child{color:#6b5c3f;}
+  .cert-row span:last-child{font-weight:700;}
+  .cert-code{margin-top:12px;font-family:monospace;font-size:13px;letter-spacing:.08em;color:#6b5c3f;text-align:center;background:var(--paper-2);border-radius:4px;padding:6px;}
+  .cert-footer{margin-top:12px;font-size:11px;color:#8a7a55;text-align:center;line-height:1.6;}
+  .achievement{
+    background:var(--paper);color:var(--ink);border-radius:8px;padding:16px 20px;max-width:440px;margin:14px 0 18px 0;
+    box-shadow:0 12px 30px rgba(0,0,0,.35);
+  }
+  .achievement .badge-title{font-weight:700;color:var(--lantern-red);font-family:'Noto Serif TC',serif;font-size:15px;margin-bottom:6px;}
+  .mnemonic{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:460px;margin-bottom:16px;}
+  .mnemonic .step{background:rgba(242,232,213,.1);border:1px solid var(--gold-soft);border-radius:20px;padding:6px 14px;font-size:12.5px;color:var(--gold-soft);}
+  .hotline{
+    font-family:'Noto Serif TC',serif;font-size:clamp(20px,4vw,26px);font-weight:900;color:#fff;background:var(--lantern-red);
+    padding:10px 26px;border-radius:6px;letter-spacing:.05em;box-shadow:0 8px 20px rgba(194,54,22,.5);margin-bottom:8px;
+  }
+  .hotline-note{font-size:12px;color:rgba(242,232,213,.7);margin-bottom:22px;}
+
+  /* ---------- Pause ---------- */
+  #pause-layer{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,12,24,.7);z-index:60;}
+  #pause-layer.active{display:flex;}
+  #pause-box{background:var(--paper);color:var(--ink);border-radius:10px;padding:24px 26px;text-align:center;width:min(320px,88vw);}
+  #pause-box h2{font-family:'Noto Serif TC',serif;margin:0 0 4px 0;}
+  #pause-box .sub{font-size:12.5px;color:#6b5c3f;margin-bottom:18px;}
+  #pause-box button{width:100%;margin-bottom:10px;}
+
+  /* ---------- Mobile controls ---------- */
+  #mobile-controls{
+    position:absolute;display:none;justify-content:space-between;align-items:flex-end;
+    left:0;right:0;
+    bottom:calc(14px + env(safe-area-inset-bottom, 0px));
+    padding-left:calc(16px + env(safe-area-inset-left, 0px));
+    padding-right:calc(16px + env(safe-area-inset-right, 0px));
+    z-index:25;pointer-events:none;
+  }
+  #mobile-controls.show{display:flex;}
+  #mobile-controls, #mobile-controls *{
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;
+  }
+  #joystick-base{
+    width:112px;height:112px;border-radius:50%;pointer-events:auto;touch-action:none;
+    flex:0 0 auto;
+    background:rgba(242,232,213,.35);border:2px solid rgba(242,232,213,.55);
+    display:flex;align-items:center;justify-content:center;position:relative;
+  }
+  #joystick-knob{
+    width:52px;height:52px;border-radius:50%;background:rgba(212,160,23,.9);
+    box-shadow:0 4px 10px rgba(0,0,0,.35);position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);transition:transform .12s ease;
+  }
+  #joystick-base.dragging #joystick-knob{transition:none;}
+  #interact-btn{
+    align-self:flex-end;flex:0 0 auto;
+    width:92px;height:92px;border-radius:50%;
+    background:var(--lantern-red);color:#fff;
+    font-weight:700;border:3px solid rgba(255,255,255,.5);font-size:17px;line-height:1.25;
+    box-shadow:0 8px 20px rgba(0,0,0,.45);pointer-events:auto;touch-action:manipulation;
+    position:relative;
+  }
+  /* invisible halo enlarges the tappable area well beyond the visible circle */
+  #interact-btn::after{
+    content:"";position:absolute;inset:-16px;border-radius:50%;
+  }
+  #interact-btn:active{background:#a52d12;transform:scale(0.94);}
+  #interact-btn.ready{animation:interactPulse 1.3s ease-in-out infinite;}
+  @keyframes interactPulse{
+    0%,100%{box-shadow:0 8px 20px rgba(0,0,0,.45), 0 0 0 0 rgba(212,160,23,.55);}
+    50%{box-shadow:0 8px 20px rgba(0,0,0,.45), 0 0 0 14px rgba(212,160,23,0);}
+  }
+  #pause-toggle{
+    position:absolute;
+    top:calc(12px + env(safe-area-inset-top, 0px));
+    right:calc(12px + env(safe-area-inset-right, 0px));
+    z-index:26;background:rgba(27,35,64,.82);border:1px solid var(--gold);
+    color:var(--paper);border-radius:6px;padding:6px 10px;font-size:16px;cursor:pointer;
+  }
+
+  /* ---------- Location labels ---------- */
+  #labels-layer{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden;}
+  .loc-label{
+    position:absolute;transform:translate(-50%,-100%);white-space:nowrap;
+    background:rgba(27,35,64,.78);border:1px solid rgba(212,160,23,.6);color:var(--gold-soft);
+    font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:14px;
+    box-shadow:0 4px 10px rgba(0,0,0,.3);letter-spacing:.02em;
+  }
+  .loc-label::after{
+    content:"";position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);
+    border-width:5px 5px 0 5px;border-style:solid;border-color:rgba(27,35,64,.78) transparent transparent transparent;
+  }
+  .loc-label.done{opacity:.55;}
+
+  @media (max-width:640px){
+    #objective{font-size:11.5px;max-width:56%;}
+  }
+  /* Touch devices get the on-screen controls regardless of screen width
+     (landscape phones and tablets exceed 640px). */
+  @media (hover:none) and (pointer:coarse){
+    #mobile-controls{display:flex;}
+    #objective{font-size:11.5px;max-width:52%;}
+    #scene-hint{display:none;}
+  }
+  /* Short landscape screens: shrink controls so nothing is clipped. */
+  @media (hover:none) and (pointer:coarse) and (max-height:460px){
+    #joystick-base{width:92px;height:92px;}
+    #joystick-knob{width:42px;height:42px;}
+    #interact-btn{width:76px;height:76px;font-size:15px;}
+    #mobile-controls{bottom:calc(8px + env(safe-area-inset-bottom, 0px));}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TITLE -->
+  <div class="screen active" id="title-screen">
+    <div class="lantern-row">
+      <div class="lantern"></div><div class="lantern"></div><div class="lantern"></div>
+    </div>
+    <div class="eyebrow">選風闖關小遊戲</div>
+    <h1 class="game-title">反賄選任務</h1>
+    <div class="subtitle">清水里的乾淨一票</div>
+    <div class="brief-card">
+      <span class="stamp">〔今日待辦〕</span><br><br>
+      年底九合一選舉將至，清水里近日出現多起可疑情資。<br>
+      你是住在清水里的一般里民，今天要出門走走，途中會經過 <b>廟口</b>、<b>柑仔店</b>、<b>活動中心</b>、<b>里長辦公室</b> 四個地點，
+      看看能不能分辨哪些是合法拜票、哪些已經觸法賄選——並學會遇到賄選時該怎麼保護自己、正確檢舉。
+    </div>
+    <button class="primary-btn" id="start-btn">開始任務</button>
+    <button class="ghost-btn" id="howto-btn">操作方式</button>
+    <div class="controls-hint" id="controls-hint" style="display:none;">
+      電腦：方向鍵 / WASD 移動、E 鍵互動、Esc 暫停<br>
+      手機：左下搖桿移動、右下 E 互動鍵
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="game-screen">
+    <div id="hud">
+      <div id="objective"><b>任務目標：</b><span id="objective-text">前往廟口，與王姐互動（按 E）</span></div>
+      <div id="evidence-badge">📒 <span id="evidence-count">0</span>/4</div>
+    </div>
+    <button id="pause-toggle">Ⅱ</button>
+    <div id="three-wrap"></div>
+    <div id="labels-layer"></div>
+    <div id="scene-hint">拖曳可微調視角</div>
+    <div id="mobile-controls">
+      <div id="joystick-base">
+        <div id="joystick-knob"></div>
+      </div>
+      <button id="interact-btn">E<br>互動</button>
+    </div>
+  </div>
+
+  <!-- DIALOGUE -->
+  <div id="dialogue-layer">
+    <div id="vn-scrim"></div>
+    <div id="vn-stamp"></div>
+    <div id="dialogue-box">
+      <div id="dialogue-speaker">王姐</div>
+      <div id="dialogue-text"></div>
+      <div id="dialogue-choices"></div>
+      <div id="feedback-note"></div>
+      <button id="dialogue-continue" style="display:none;">繼續</button>
+    </div>
+  </div>
+
+  <!-- NOTEBOOK -->
+  <div id="notebook-layer">
+    <div id="notebook">
+      <h2>📒 蒐證筆記本</h2>
+      <div class="sub">依「一接、二保、三打」原則，記下每次遭遇的人事時地物</div>
+      <div id="notebook-list"></div>
+      <button class="primary-btn" id="notebook-close">關閉</button>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz-layer">
+    <div id="quiz-box">
+      <h2>最終考驗：合法拜票 or 賄選？</h2>
+      <div class="sub">五題全數判斷完成，即可結案回報</div>
+      <div id="quiz-list"></div>
+      <div id="quiz-result"></div>
+      <button class="primary-btn" id="quiz-submit" style="display:none;">結案回報</button>
+    </div>
+  </div>
+
+  <!-- END -->
+  <div class="screen" id="end-screen">
+    <h2 id="end-title">任務完成：清水里選風清朗</h2>
+    <div id="end-score" class="end-score"></div>
+    <div class="achievement">
+      <div class="badge-title" id="end-badge">🏅 成就解鎖：乾淨選舉守門人</div>
+      <span id="end-note">作業心得：拜票拜票，界線要拜清楚——文宣品是心意，現金招待是犯罪。</span>
+    </div>
+    <div class="mnemonic">
+      <span class="step">一接：接近了解狀況</span>
+      <span class="step">二保：保存人事時地物證據</span>
+      <span class="step">三打：撥打檢舉專線</span>
+      <span class="step">四訴：起訴先領 1/4 獎金</span>
+      <span class="step">五搞定：判決確定領全額</span>
+    </div>
+    <div class="hotline">☎ 0800-024-099（撥通後按 4）</div>
+    <div class="hotline-note">檢舉人身分絕對保密・最高可獲高額檢舉獎金</div>
+
+    <div class="cert-section">
+      <div class="cert-intro">完成任務後，可以截圖下方完成證明，到政風室兌換宣導小禮物</div>
+      <div class="cert-input-row">
+        <input type="text" id="cert-name-input" placeholder="輸入姓名或暱稱（選填）" maxlength="20">
+        <button class="primary-btn" id="cert-generate-btn">產生完成證明</button>
+      </div>
+      <div id="cert-card" class="cert-card" style="display:none;">
+        <div class="cert-seal">驗訖</div>
+        <div class="cert-header">清水里反賄選任務・完成證明</div>
+        <div class="cert-name" id="cert-name">—</div>
+        <div class="cert-row"><span>完成日期</span><span id="cert-date">—</span></div>
+        <div class="cert-row"><span>結案考驗成績</span><span id="cert-score">—</span></div>
+        <div class="cert-row"><span>成就等級</span><span id="cert-tier">—</span></div>
+        <div class="cert-code" id="cert-code">—</div>
+        <div class="cert-footer">請截圖本畫面，至政風室兌換宣導小禮物</div>
+      </div>
+
+      <div id="cert-submit-block" style="display:none;">
+        <div class="cert-submit-title">登記完成紀錄（供兌獎統計）</div>
+        <div class="cert-input-row">
+          <input type="email" id="cert-email-input" placeholder="請輸入電子郵件" maxlength="80">
+          <button class="primary-btn" id="cert-submit-btn">送出登記</button>
+        </div>
+        <div class="cert-privacy" id="cert-privacy">
+          【蒐集個人資料告知事項】本表單由○○處政風室蒐集您的姓名與電子郵件，
+          僅供本次反賄選宣導活動之兌獎核對與成效統計，保存至活動結束後○個月即銷毀。
+          您可依個人資料保護法第 3 條規定，向本室行使查詢、更正或刪除等權利。
+          聯絡窗口：○○○（分機 ○○○○）。不填寫仍可截圖完成證明兌獎。
+        </div>
+        <div class="cert-status" id="cert-status"></div>
+      </div>
+    </div>
+
+    <button class="primary-btn" id="replay-btn">重新遊玩</button>
+  </div>
+
+  <!-- PAUSE -->
+  <div id="pause-layer">
+    <div id="pause-box">
+      <h2>任務暫停</h2>
+      <div class="sub">進度已自動保留</div>
+      <button class="primary-btn" id="resume-btn">繼續任務</button>
+      <button class="ghost-btn" id="restart-btn">重新開始本章</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ==========================================================================
+     ★ 設定區：填完成績登記用的 Google 表單資訊（詳細步驟見交付說明）
+     --------------------------------------------------------------------------
+     1. 建立一份 Google 表單，依序新增這 5 個「簡答」題目：
+          姓名 / 電子郵件 / 完成日期 / 考驗成績 / 成就等級 / 任務代號
+     2. 取得表單的 formResponse 網址與各題的 entry ID，填入下方。
+     3. 只要 FORM_ACTION 留空，登記功能就會自動隱藏，遊戲照常運作。
+     ========================================================================== */
+  var SUBMIT_CONFIG = {
+    FORM_ACTION: 'https://docs.google.com/forms/d/e/1FAIpQLSdMIClkwgl3Cl-Q_ZP5qrElPo0FGtGICgRa4SIqTFPEThEJ4Q/formResponse',
+    FIELDS: {
+      name:  'entry.423673166',    // 姓名
+      email: 'entry.532893809',    // 電子郵件
+      date:  'entry.809787697',    // 完成日期
+      score: 'entry.2072446636',   // 考驗成績
+      tier:  'entry.967657147',    // 成就等級
+      code:  'entry.195596810'     // 任務代號
+    }
+  };
+
+  /* ---------------- Town layout: one main street, gate at the entrance ---------------- */
+  // Buildings sit off the road; each has an explicit roadside spot where its NPC stands.
+  var BUILD_POS = {
+    2:{x:-7.0, z:2,    npcX:-4.1, npcZ:2.2},    // 廟口 (left)
+    3:{x: 7.0, z:-6,   npcX: 4.1, npcZ:-5.8},   // 柑仔店 (right)
+    4:{x:-7.0, z:-14,  npcX:-4.1, npcZ:-13.8},  // 活動中心 (left)
+    5:{x: 7.0, z:-22,  npcX: 4.1, npcZ:-21.8}   // 里長辦公室 (right)
+  };
+  var npcMeta = {
+    2:{key:'temple', label:'廟口・王姐', icon:'⛩️', talk:'talk1'},
+    3:{key:'store', label:'柑仔店', icon:'🏪', talk:'talk2'},
+    4:{key:'hall', label:'活動中心', icon:'🏮', talk:'talk3'},
+    5:{key:'office', label:'里長辦公室', icon:'🏛️', talk:'talk4'}
+  };
+  var ROAD_HALF = 3.4;                      // paved carriageway half-width
+  var WORLD_HALF_X = 5.0, WORLD_HALF_Z = 27; // walkable bounds (longer street)
+  var GATE_Z = 15.5;                        // gate set well back so it can't block the first venue
+  var SPAWN_POS = {x:0, z: GATE_Z + 4.5};   // player starts OUTSIDE the gate, facing in
+  var PLAYER_R = 0.32;
+  var INTERACT_RADIUS = 3.2;
+  var colliders = []; // {type:'rect', minX,maxX,minZ,maxZ} or {type:'circle', x,z,r}
+
+  var stampSVG = {
+    correct:'<svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="68" fill="none" stroke="#4c7a51" stroke-width="6"/>'+
+      '<circle cx="75" cy="75" r="58" fill="none" stroke="#4c7a51" stroke-width="2"/>'+
+      '<text x="75" y="68" text-anchor="middle" font-size="30" font-family="\'Noto Serif TC\',serif" fill="#4c7a51" font-weight="900">正解</text>'+
+      '<text x="75" y="98" text-anchor="middle" font-size="14" font-family="\'Noto Serif TC\',serif" fill="#4c7a51" font-weight="700" letter-spacing="3">判斷正確</text></svg>',
+    wrong:'<svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="68" fill="none" stroke="#8e2a2a" stroke-width="6"/>'+
+      '<circle cx="75" cy="75" r="58" fill="none" stroke="#8e2a2a" stroke-width="2"/>'+
+      '<text x="75" y="68" text-anchor="middle" font-size="30" font-family="\'Noto Serif TC\',serif" fill="#8e2a2a" font-weight="900">注意</text>'+
+      '<text x="75" y="98" text-anchor="middle" font-size="14" font-family="\'Noto Serif TC\',serif" fill="#8e2a2a" font-weight="700" letter-spacing="3">再想一想</text></svg>'
+  };
+
+  /* ---------------- Dialogue content ---------------- */
+  var dialogues = {
+    talk1:{
+      speaker:'廟口・王姐',
+      text:'「阿弟仔，來來來，平安符拿去，順便……這個紅包收下，記得投第3號喔，我們全家都靠他吃飯呢！」',
+      choices:[
+        {label:'直接收下紅包，假裝沒聽到剛才那句話', correct:false,
+         fb:'收下紅包等於當場成立對價關係——這已構成賄選的一環，身為選民絕對不能收！'},
+        {label:'婉拒紅包，並默默記下時間、地點、對話內容', correct:true,
+         fb:'正確！「二保」就是要保存人事時地物證據，不動聲色蒐證，之後再撥打檢舉專線處理。'},
+        {label:'當場大聲斥責王姐行賄', correct:false,
+         fb:'打草驚蛇會讓對方湮滅證據或串供，正確做法是先冷靜蒐證，不要當場攤牌。'}
+      ]
+    },
+    talk2:{
+      speaker:'柑仔店老闆',
+      text:'「頭家，這是候選人服務處印的原子筆跟面紙，上面有名字，要不要拿一份？」',
+      choices:[
+        {label:'這印有候選人姓名，一定是賄選，要立刻檢舉', correct:false,
+         fb:'合理價值的文宣品（原子筆、面紙、扇子等）屬於合法競選宣傳，並非賄選喔。'},
+        {label:'這是合理價值的競選宣傳品，屬於合法拜票，收下即可', correct:true,
+         fb:'正確！賄選的關鍵在於「對價期約」與「顯不相當的利益」，一般文宣小物不構成賄選。'},
+        {label:'假裝不知道，偷偷多拿好幾份回家囤積', correct:false,
+         fb:'雖然這不是違法行為，但囤積索取也不太恰當——拿一份自己需要的就好。'}
+      ]
+    },
+    talk3:{
+      speaker:'活動中心廣播',
+      text:'「來喔來喔，辦桌流水席開動囉！大家吃飽別忘記投給第 7 號村長候選人，還有摸彩送電視機喔！」',
+      choices:[
+        {label:'跟著大家一起入座吃辦桌，想說吃免錢的划算', correct:false,
+         fb:'以聚餐、摸彩換取投票承諾，屬於典型的賄選手法，接受招待就是收賄的一環。'},
+        {label:'先在旁觀察，記下辦桌時間、地點與廣播內容，再低調離開通報', correct:true,
+         fb:'正確！蒐證要保持低調客觀，記清楚細節後盡快撥打檢舉專線，讓檢調接手處理。'},
+        {label:'立刻衝上台制止流水席繼續進行', correct:false,
+         fb:'現場貿然介入可能引發衝突，也可能讓對方即時銷毀證據，不是正確處理方式。'}
+      ]
+    },
+    talk4:{
+      speaker:'里長辦公室訪客',
+      text:'「幫忙動員個幾票，選後我們一定包個紅包答謝，你懂的。」',
+      choices:[
+        {label:'順著話題追問細節（金額、時間、方式），事後盡快記錄並回報', correct:true,
+         fb:'正確！適度應對、套出關鍵資訊（人事時地物）是有效蒐證的技巧，之後立即回報檢調。'},
+        {label:'立刻翻臉走人，不想再多聽一句', correct:false,
+         fb:'雖然拒絕行賄是對的，但錯失了進一步了解關鍵資訊的機會，蒐證會不夠完整。'},
+        {label:'收下承諾，答應幫忙動員', correct:false,
+         fb:'這已經是參與賄選犯行，身為公民絕對不能答應這種要求！'}
+      ]
+    }
+  };
+  var dialogueOrder = ['talk1','talk2','talk3','talk4'];
+  var objectiveTextByStep = [
+    '前往廟口，與王姐互動（按 E）',
+    '前往柑仔店，了解文宣品狀況（按 E）',
+    '前往活動中心，查看流水席（按 E）',
+    '前往里長辦公室，應對可疑訪客（按 E）',
+    '四個地點都完成了，回到廟口前的空地按 E 進行結案考驗'
+  ];
+
+  /* ---------------- Quiz content ---------------- */
+  var quizItems = [
+    {text:'候選人挨家挨戶拜票，並發送印有政見的雙面文宣單。', answer:'legal',
+     fb:'發送一般文宣品屬於合法競選活動。'},
+    {text:'椿腳選前挨家挨戶發放現金，請託投給特定候選人。', answer:'illegal',
+     fb:'現金換取投票承諾，是最典型的賄選行為。'},
+    {text:'候選人服務處邀請選民出國旅遊，回國後要求支持投票。', answer:'illegal',
+     fb:'以旅遊招待作為對價換取選票，同樣構成賄選。'},
+    {text:'候選人辦理政見發表會，現場提供競選帽、背心供支持者索取。', answer:'legal',
+     fb:'合理價值的競選周邊物品屬合法宣傳，不具對價性。'},
+    {text:'有心人士冒充候選人助理，承諾「投他一票、送一包白米」。', answer:'illegal',
+     fb:'以實物換取選票承諾，構成賄選犯行，應立即蒐證檢舉。'}
+  ];
+
+  /* ---------------- State ---------------- */
+  var state = {
+    pos:{x:0, z:9}, // placeholder, real spawn set from SPAWN_POS in startGame()
+    heading: Math.PI, // radians, which way the player is facing
+    completed:{}, // talk1..4 -> true
+    step:0,
+    mode:'title' // title|playing|dialogue|notebook|quiz|paused|end
+  };
+
+  var evidenceLog = []; // {icon, text}
+
+  /* ---------------- DOM refs ---------------- */
+  var el = {};
+  ['title-screen','game-screen','end-screen','start-btn','howto-btn','controls-hint',
+   'three-wrap','labels-layer','objective-text','evidence-count','evidence-badge',
+   'dialogue-layer','dialogue-speaker','dialogue-text','dialogue-choices','dialogue-continue','feedback-note',
+   'vn-stamp',
+   'notebook-layer','notebook-list','notebook-close',
+   'quiz-layer','quiz-list','quiz-result','quiz-submit',
+   'pause-layer','pause-toggle','resume-btn','restart-btn','replay-btn',
+   'end-title','end-score','end-badge','end-note',
+   'cert-name-input','cert-generate-btn','cert-card','cert-name','cert-date','cert-score','cert-tier','cert-code',
+   'cert-submit-block','cert-email-input','cert-submit-btn','cert-status',
+   'mobile-controls','interact-btn'
+  ].forEach(function(id){ el[id.replace(/-([a-z])/g,function(m,c){return c.toUpperCase();})] = document.getElementById(id); });
+
+  /* ---------------- Three.js world ---------------- */
+  var scene, camera, renderer, playerGroup, playerRig;
+  var buildingMeshes = {}; // code -> {group, checkSprite, done}
+  var npcRigs = []; // glTF character rigs for NPCs, updated each frame
+  var camAngle = { theta: Math.PI*0.45, phi: 1.14, radius: 15 };
+  var camTarget = new THREE.Vector3(0,0,9);
+  var walkPhase = 0;
+  var threeReady = false;
+  var CAM_D = 7.4;
+
+  function flatMat(color, rough){
+    return new THREE.MeshStandardMaterial({color:color, flatShading:true, roughness: rough===undefined?0.85:rough, metalness:0.04});
+  }
+
+  /* ---------- Canvas-painted textures (no external asset files needed) ---------- */
+  function makeCanvasTexture(draw, size){
+    var c = document.createElement('canvas'); c.width=size; c.height=size;
+    draw(c.getContext('2d'), size);
+    var tex = new THREE.CanvasTexture(c);
+    return tex;
+  }
+  var _stoneTex = null;
+  function stoneTexture(){
+    if(_stoneTex) return _stoneTex;
+    _stoneTex = makeCanvasTexture(function(ctx,s){
+      ctx.fillStyle = '#efe4c8'; ctx.fillRect(0,0,s,s);
+      for(var i=0;i<90;i++){
+        var x=Math.random()*s, y=Math.random()*s, r=3+Math.random()*9;
+        ctx.fillStyle = 'rgba(120,100,60,'+(0.03+Math.random()*0.05)+')';
+        ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+      }
+      ctx.strokeStyle='rgba(120,100,60,0.4)'; ctx.lineWidth=3;
+      ctx.strokeRect(1.5,1.5,s-3,s-3);
+    }, 128);
+    return _stoneTex;
+  }
+  var _grassTex = null;
+  function grassTexture(){
+    if(_grassTex) return _grassTex;
+    _grassTex = makeCanvasTexture(function(ctx,s){
+      ctx.fillStyle='#5c8a5f'; ctx.fillRect(0,0,s,s);
+      for(var i=0;i<600;i++){
+        var x=Math.random()*s,y=Math.random()*s;
+        ctx.fillStyle = Math.random()>0.5? 'rgba(255,255,255,0.06)':'rgba(0,0,0,0.07)';
+        ctx.fillRect(x,y,2,2);
+      }
+    }, 128);
+    _grassTex.wrapS = _grassTex.wrapT = THREE.RepeatWrapping;
+    return _grassTex;
+  }
+  function woodTexture(baseColor){
+    return makeCanvasTexture(function(ctx,s){
+      ctx.fillStyle = baseColor; ctx.fillRect(0,0,s,s);
+      for(var i=0;i<7;i++){
+        var y = (i+0.5)*(s/7);
+        ctx.strokeStyle='rgba(0,0,0,0.12)'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.moveTo(0,y+Math.sin(i)*3); ctx.lineTo(s,y-Math.sin(i)*3); ctx.stroke();
+      }
+    }, 64);
+  }
+  function tileRoofTexture(baseColor){
+    return makeCanvasTexture(function(ctx,s){
+      ctx.fillStyle = baseColor; ctx.fillRect(0,0,s,s);
+      var rows = 6;
+      for(var r=0;r<rows;r++){
+        var y = r*(s/rows);
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.fillRect(0,y,s,2);
+        for(var cx=0;cx<6;cx++){
+          ctx.beginPath();
+          ctx.arc((cx+0.5)*(s/6) + (r%2?s/12:0), y, s/13, Math.PI, 0);
+          ctx.fillStyle='rgba(255,255,255,0.06)';
+          ctx.fill();
+        }
+      }
+    }, 96);
+  }
+  var _skyTex = null;
+  function skyTexture(){
+    if(_skyTex) return _skyTex;
+    _skyTex = makeCanvasTexture(function(ctx,s){
+      var grad = ctx.createLinearGradient(0,0,0,s);
+      grad.addColorStop(0,'#7fa3d4');
+      grad.addColorStop(0.55,'#c3d7e8');
+      grad.addColorStop(1,'#f1efdf');
+      ctx.fillStyle=grad; ctx.fillRect(0,0,s,s);
+      for(var i=0;i<12;i++){
+        var x=Math.random()*s, y=Math.random()*s*0.55, r=18+Math.random()*36;
+        ctx.fillStyle='rgba(255,255,255,0.4)';
+        ctx.beginPath(); ctx.ellipse(x,y,r,r*0.38,0,0,Math.PI*2); ctx.fill();
+      }
+    }, 256);
+    return _skyTex;
+  }
+  var _shadowTex = null;
+  function shadowTexture(){
+    if(_shadowTex) return _shadowTex;
+    _shadowTex = makeCanvasTexture(function(ctx,s){
+      var g = ctx.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);
+      g.addColorStop(0,'rgba(20,20,15,0.38)');
+      g.addColorStop(1,'rgba(20,20,15,0)');
+      ctx.fillStyle=g; ctx.fillRect(0,0,s,s);
+    }, 64);
+    return _shadowTex;
+  }
+  function makeShadowBlob(size){
+    var geo = new THREE.CircleGeometry(size,16);
+    geo.rotateX(-Math.PI/2);
+    var mat = new THREE.MeshBasicMaterial({map:shadowTexture(), transparent:true, depthWrite:false});
+    mat.fog = false;
+    var m = new THREE.Mesh(geo,mat);
+    m.position.y = 0.015;
+    return m;
+  }
+
+  function addBox(parent,w,h,d,color,x,y,z,rotY){
+    var m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), flatMat(color));
+    m.position.set(x,y,z); if(rotY) m.rotation.y=rotY;
+    m.castShadow=true; m.receiveShadow=true;
+    parent.add(m); return m;
+  }
+  function addCyl(parent,rt,rb,h,color,x,y,z,seg){
+    var m = new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg||8), flatMat(color));
+    m.position.set(x,y,z);
+    m.castShadow=true; m.receiveShadow=true;
+    parent.add(m); return m;
+  }
+  function addSphere(parent,r,color,x,y,z){
+    var m = new THREE.Mesh(new THREE.SphereGeometry(r,10,8), flatMat(color));
+    m.position.set(x,y,z);
+    m.castShadow=true; m.receiveShadow=true;
+    parent.add(m); return m;
+  }
+  function addCone(parent,r,h,color,x,y,z,seg){
+    var m = new THREE.Mesh(new THREE.ConeGeometry(r,h,seg||8), flatMat(color));
+    m.position.set(x,y,z);
+    m.castShadow=true; m.receiveShadow=true;
+    parent.add(m); return m;
+  }
+
+  /* ---------- Kenney "Blocky Characters" glTF models ---------- */
+  var CHAR_SCALE = 0.9;
+  var characterAssets = {};
+  var propAssets = {};
+  var assetsLoaded = false;
+  function loadGLTF(url){
+    return new Promise(function(resolve, reject){
+      var loader = new THREE.GLTFLoader();
+      loader.load(url, resolve, undefined, reject);
+    });
+  }
+  var PROP_SOURCES = {
+    'tree-oak':        'models/nature/tree_oak.glb',
+    'tree-pine-a':      'models/nature/tree_pineRoundA.glb',
+    'tree-pine-b':      'models/nature/tree_pineRoundB.glb',
+    'house-a':          'models/suburban/building-type-a.glb',
+    'house-b':          'models/suburban/building-type-b.glb',
+    'house-c':          'models/suburban/building-type-c.glb',
+    'bench':            'models/furniture/bench.glb',
+    'lamp':             'models/furniture/lampRoundFloor.glb'
+  };
+  function preloadCharacters(onDone){
+    var keys = ['a','n','m','k','q'];
+    var charPromises = keys.map(function(k){
+      return loadGLTF('models/character-'+k+'.glb').then(function(gltf){ characterAssets[k]=gltf; });
+    });
+    var propPromises = Object.keys(PROP_SOURCES).map(function(name){
+      return loadGLTF(PROP_SOURCES[name]).then(function(gltf){ propAssets[name]=gltf; });
+    });
+    Promise.all(charPromises.concat(propPromises)).then(function(){ assetsLoaded=true; onDone(true); })
+      .catch(function(err){ console.error('asset load failed', err); onDone(false); });
+  }
+  function instantiateCharacter(key){
+    var asset = characterAssets[key];
+    var root = asset.scene.clone(true);
+    root.scale.setScalar(CHAR_SCALE);
+    root.traverse(function(o){ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; } });
+    var mixer = new THREE.AnimationMixer(root);
+    var clips = {};
+    asset.animations.forEach(function(c){ clips[c.name]=c; });
+    var actions = {};
+    if(clips.idle) actions.idle = mixer.clipAction(clips.idle);
+    if(clips.walk) actions.walk = mixer.clipAction(clips.walk);
+    root.add(makeShadowBlob(0.42));
+    return {root:root, mixer:mixer, actions:actions, current:null};
+  }
+  function instantiateProp(name, scale){
+    var asset = propAssets[name];
+    var root = asset.scene.clone(true);
+    root.scale.setScalar(scale===undefined?1:scale);
+    root.traverse(function(o){
+      if(o.isMesh){
+        o.castShadow=true; o.receiveShadow=true;
+        if(o.material){ o.material = o.material.clone(); o.material.metalness = 0; }
+      }
+    });
+    return root;
+  }
+  function playRigAction(rig, name){
+    var next = rig.actions[name];
+    if(!next || rig.current===next) return;
+    if(rig.current) rig.current.fadeOut(0.2);
+    next.reset().fadeIn(0.2).play();
+    rig.current = next;
+  }
+  /* ---------- Red quest arrows floating above each NPC ---------- */
+  var questArrows = {};   // building code -> {group, baseY}
+
+  function makeQuestArrow(){
+    var g = new THREE.Group();
+    var mat = new THREE.MeshStandardMaterial({
+      color:0xe11d1d, flatShading:true, roughness:0.45, metalness:0.0,
+      emissive:0x8a0f0f, emissiveIntensity:0.55
+    });
+    var shaft = new THREE.Mesh(new THREE.BoxGeometry(0.17,0.42,0.17), mat);
+    shaft.position.y = 0.46;
+    g.add(shaft);
+    var head = new THREE.Mesh(new THREE.ConeGeometry(0.34,0.46,4), mat);
+    head.position.y = 0.10;
+    head.rotation.y = Math.PI/4;
+    head.rotation.x = Math.PI;   // point downward at the NPC
+    g.add(head);
+    g.traverse(function(o){ if(o.isMesh){ o.castShadow = false; o.receiveShadow = false; } });
+    return g;
+  }
+
+  function addQuestArrow(code, x, z){
+    var arrow = makeQuestArrow();
+    var baseY = 2.45;
+    arrow.position.set(x, baseY, z);
+    scene.add(arrow);
+    questArrows[code] = {group:arrow, baseY:baseY};
+  }
+
+  function updateQuestArrows(delta){
+    var t = clock.elapsedTime;
+    Object.keys(questArrows).forEach(function(code){
+      var a = questArrows[code];
+      var done = buildingMeshes[code] && buildingMeshes[code].done;
+      a.group.visible = !done;
+      if(!a.group.visible) return;
+      a.group.position.y = a.baseY + Math.sin(t*2.6 + Number(code)) * 0.16;
+      a.group.rotation.y += delta * 1.5;
+    });
+  }
+
+  function spawnNPC(key, x, z, rotY){
+    var rig = instantiateCharacter(key);
+    rig.root.position.set(x, 0, z);
+    rig.root.rotation.y = rotY;
+    scene.add(rig.root);
+    playRigAction(rig, 'idle');
+    npcRigs.push(rig);
+    return rig.root;
+  }
+
+  function makeCharacter(skin, cloth, hair){
+    var g = new THREE.Group();
+    addBox(g,0.62,0.8,0.4,cloth,0,0.95,0);
+    addBox(g,0.66,0.16,0.44,cloth,0,1.32,0); // collar/shoulder trim for a bit of shape
+    var head = addSphere(g,0.3,skin,0,1.55,0);
+    var hairMesh = new THREE.Mesh(new THREE.SphereGeometry(0.32,10,8,0,Math.PI*2,0,Math.PI*0.55), flatMat(hair));
+    hairMesh.position.set(0,1.66,0); hairMesh.castShadow=true; g.add(hairMesh);
+    addSphere(g,0.045,0x2b2620,-0.11,1.53,0.27);
+    addSphere(g,0.045,0x2b2620,0.11,1.53,0.27);
+    var legL = addBox(g,0.22,0.65,0.26,0x2b2620,-0.15,0.35,0);
+    var legR = addBox(g,0.22,0.65,0.26,0x2b2620,0.15,0.35,0);
+    addBox(g,0.24,0.11,0.32,0x1b1712,-0.15,0.055,0.03);
+    addBox(g,0.24,0.11,0.32,0x1b1712,0.15,0.055,0.03);
+    var armL = addBox(g,0.17,0.55,0.19,cloth,-0.4,1.0,0);
+    var armR = addBox(g,0.17,0.55,0.19,cloth,0.4,1.0,0);
+    g.userData.legL = legL; g.userData.legR = legR;
+    g.userData.armL = armL; g.userData.armR = armR;
+    var shadow = makeShadowBlob(0.42);
+    g.add(shadow);
+    return g;
+  }
+
+  function addRectCollider(cx,cz,halfW,halfD){
+    colliders.push({type:'rect', minX:cx-halfW, maxX:cx+halfW, minZ:cz-halfD, maxZ:cz+halfD});
+  }
+  function addCircleCollider(cx,cz,r){
+    colliders.push({type:'circle', x:cx, z:cz, r:r});
+  }
+
+  var TREE_VARIANTS = ['tree-oak','tree-pine-a','tree-pine-b'];
+  var treePickIndex = 0;
+  function addDecorTree(x,z){
+    var key = TREE_VARIANTS[treePickIndex % TREE_VARIANTS.length];
+    treePickIndex++;
+    var tree = instantiateProp(key, 1.6);
+    tree.rotation.y = (treePickIndex*137)%360 * Math.PI/180;
+    tree.add(makeShadowBlob(0.6));
+    tree.position.set(x,0,z);
+    if(Math.abs(x) > 9.5){ tree.traverse(function(o){ if(o.isMesh) o.castShadow=false; }); }
+    scene.add(tree);
+    if(Math.abs(x) < 9.5) addCircleCollider(x,z,0.5);
+  }
+
+  var HOUSE_VARIANTS = ['house-a','house-b','house-c'];
+  var housePickIndex = 0;
+  function addDecorHouse(x,z,color,rotY){
+    var key = HOUSE_VARIANTS[housePickIndex % HOUSE_VARIANTS.length];
+    housePickIndex++;
+    var g = instantiateProp(key, 1.9);
+    g.add(makeShadowBlob(1.3));
+    g.position.set(x,0,z); if(rotY) g.rotation.y=rotY;
+    if(Math.abs(x) > 9.5){ g.traverse(function(o){ if(o.isMesh) o.castShadow=false; }); }
+    scene.add(g);
+    if(Math.abs(x) < 10.5) addRectCollider(x,z,1.1,1.0);
+  }
+
+  function addLamppost(x,z){
+    var g = instantiateProp('lamp', 2.15);
+    g.position.set(x,0,z);
+    scene.add(g);
+    addCircleCollider(x,z,0.2);
+  }
+
+  function addBench(x,z,rotY){
+    var g = instantiateProp('bench', 2.4);
+    g.position.set(x,0,z); if(rotY) g.rotation.y=rotY;
+    scene.add(g);
+  }
+
+  function canvasPlaqueTexture(text){
+    return makeCanvasTexture(function(ctx,s){
+      ctx.fillStyle = '#5c1f13'; ctx.fillRect(0,0,s,s);
+      ctx.strokeStyle = '#d4a017'; ctx.lineWidth = s*0.05;
+      ctx.strokeRect(s*0.06,s*0.06,s*0.88,s*0.88);
+      ctx.fillStyle = '#f2e8d5';
+      ctx.font = 'bold '+(s*0.34)+'px "Noto Serif TC", serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, s/2, s/2);
+    }, 256);
+  }
+
+  function buildGate(){
+    var g = new THREE.Group();
+    var pillarSpan = WORLD_HALF_X - 0.6;
+    addBox(g,0.55,3.2,0.55,0x7a2b1c,-pillarSpan,1.6,0);
+    addBox(g,0.55,3.2,0.55,0x7a2b1c, pillarSpan,1.6,0);
+    addBox(g,pillarSpan*2+0.55,0.45,0.6,0x8a3320,0,3.35,0);
+    // solid stepped roof mass (chunky, never degenerates to a thin line on camera)
+    var roofSpan = pillarSpan*2 + 1.2;
+    addBox(g,roofSpan,        0.34, 1.90, 0x5c1f13, 0, 3.78, 0);
+    addBox(g,roofSpan*0.90,   0.32, 1.45, 0x6b2417, 0, 4.08, 0);
+    addBox(g,roofSpan*0.78,   0.30, 1.00, 0x7a2b1c, 0, 4.36, 0);
+    addBox(g,roofSpan*0.66,   0.22, 0.55, 0xd4a017, 0, 4.60, 0);
+    var plaqueMat = new THREE.MeshStandardMaterial({map:canvasPlaqueTexture('清水里'), flatShading:true, roughness:0.7});
+    var plaque = new THREE.Mesh(new THREE.BoxGeometry(2.3,0.9,0.14), plaqueMat);
+    plaque.position.set(0,3.0,0.4);
+    plaque.castShadow=true; g.add(plaque);
+    addCyl(g,0.16,0.16,0.55,0xc23616,-pillarSpan,4.05,0.7);
+    addCyl(g,0.16,0.16,0.55,0xc23616, pillarSpan,4.05,0.7);
+    g.position.set(0, 0, GATE_Z);
+    scene.add(g);
+    addRectCollider(-pillarSpan, GATE_Z, 0.42, 0.42);
+    addRectCollider( pillarSpan, GATE_Z, 0.42, 0.42);
+  }
+
+  function buildGround(){
+    var stoneTex1 = stoneTexture();
+    var roadMat     = new THREE.MeshStandardMaterial({map:stoneTex1, color:0xb9b3a4, flatShading:true, roughness:0.95});
+    var roadMatAlt  = new THREE.MeshStandardMaterial({map:stoneTex1, color:0xaea899, flatShading:true, roughness:0.95});
+    var walkMat     = new THREE.MeshStandardMaterial({map:stoneTex1, color:0xece2c8, flatShading:true, roughness:0.92});
+    var kerbMat     = flatMat(0xd8d2c2,0.9);
+    var grassTex = grassTexture();
+    grassTex.repeat.set(14,30);
+    var grassMat = new THREE.MeshStandardMaterial({map:grassTex, flatShading:true, roughness:0.95});
+
+    // ground plane, oversized so no world edge is ever visible
+    var grass = new THREE.Mesh(new THREE.BoxGeometry(120, 0.3, 120), grassMat);
+    grass.position.set(0,-0.2,0); grass.receiveShadow=true;
+    scene.add(grass);
+
+    var zStart = WORLD_HALF_Z + 4, zEnd = -WORLD_HALF_Z - 6;
+
+    // ---- carriageway down the middle ----
+    var seg = 2.0, idx = 0;
+    for(var z = zStart; z > zEnd; z -= seg){
+      var road = new THREE.Mesh(new THREE.BoxGeometry(ROAD_HALF*2, 0.1, seg*0.98), (idx%2===0)?roadMat:roadMatAlt);
+      road.position.set(0,-0.05,z - seg/2);
+      road.receiveShadow = true;
+      scene.add(road);
+      idx++;
+    }
+    // centre line dashes
+    for(var z2 = zStart-1; z2 > zEnd; z2 -= 3.2){
+      var dash = new THREE.Mesh(new THREE.BoxGeometry(0.16,0.02,1.3), flatMat(0xf0e9d2,0.7));
+      dash.position.set(0,0.01,z2);
+      scene.add(dash);
+    }
+
+    // ---- sidewalks + kerbs on both sides ----
+    [-1,1].forEach(function(side){
+      var walkCx = side*(ROAD_HALF + 1.05);
+      var wIdx = 0;
+      for(var z3 = zStart; z3 > zEnd; z3 -= seg){
+        var walk = new THREE.Mesh(new THREE.BoxGeometry(2.1,0.16,seg*0.98), walkMat);
+        walk.position.set(walkCx, 0.02, z3 - seg/2);
+        walk.receiveShadow = true;
+        scene.add(walk);
+        wIdx++;
+      }
+      var kerb = new THREE.Mesh(new THREE.BoxGeometry(0.18,0.2,Math.abs(zStart-zEnd)), kerbMat);
+      kerb.position.set(side*(ROAD_HALF+0.09), 0.04, (zStart+zEnd)/2);
+      kerb.receiveShadow = true;
+      scene.add(kerb);
+    });
+
+    // village gate across the street
+    buildGate();
+
+    // ---- continuous rows of shophouses walling both sides of the street ----
+    var blockedZ = [];
+    Object.keys(BUILD_POS).forEach(function(code){
+      var b = BUILD_POS[code];
+      blockedZ.push({x:b.x, z:b.z});
+    });
+    function isBlocked(x,z){
+      for(var i=0;i<blockedZ.length;i++){
+        if(Math.sign(blockedZ[i].x)===Math.sign(x) && Math.abs(blockedZ[i].z - z) < 4.4) return true;
+      }
+      return false;
+    }
+    [-1,1].forEach(function(side){
+      for(var z4 = zStart-2; z4 > zEnd+2; z4 -= 4.6){
+        if(Math.abs(z4 - GATE_Z) < 3.0) continue;      // keep the gate clear
+        if(isBlocked(side*7, z4)) continue;             // leave room for the 4 main venues
+        addDecorHouse(side*7.4, z4, 0, side>0 ? -Math.PI/2 : Math.PI/2);
+      }
+    });
+
+    // small well tucked onto the sidewalk (a landmark, not a plaza)
+    addCyl(scene,0.62,0.66,0.5,0xb9ada0, -(ROAD_HALF+1.2),0.27,-2.5,12);
+    addCyl(scene,0.48,0.5,0.08,0x8a7a63, -(ROAD_HALF+1.2),0.55,-2.5,12);
+    addCircleCollider(-(ROAD_HALF+1.2),-2.5,0.75);
+
+    // street furniture along the sidewalks
+    var lampSide = 1;
+    for(var lz = zStart - 4; lz > zEnd + 2; lz -= 7.0){
+      addLamppost(lampSide*(ROAD_HALF+0.75), lz);
+      lampSide *= -1;
+    }
+    var benchSide = -1;
+    for(var bz2 = zStart - 8; bz2 > zEnd + 4; bz2 -= 15.0){
+      addBench(benchSide*(ROAD_HALF+1.3), bz2, benchSide < 0 ? Math.PI/2 : -Math.PI/2);
+      benchSide *= -1;
+    }
+
+    // street trees set into the sidewalks
+    for(var tz = zStart - 2.5; tz > zEnd + 2; tz -= 4.5){
+      addDecorTree(-(ROAD_HALF+1.75), tz);
+      addDecorTree(  ROAD_HALF+1.75, tz-2.2);
+    }
+
+    // ---- surrounding neighbourhood so the town doesn't end at this one street ----
+    buildOutskirts(zStart, zEnd, walkMat);
+  }
+
+  // Deterministic pseudo-random so the layout is identical every load.
+  function prand(i){
+    var x = Math.sin(i * 127.1 + 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  }
+
+  function buildOutskirts(zStart, zEnd, laneMat){
+    // side lanes branching off the main street, hinting at a wider town grid
+    var laneZs = [];
+    for(var lnz = zStart - 7; lnz > zEnd + 5; lnz -= 11.5){ laneZs.push(lnz); }
+    laneZs.forEach(function(lz){
+      [-1,1].forEach(function(side){
+        for(var d = 9.5; d < 26; d += 2.0){
+          var seg = new THREE.Mesh(new THREE.BoxGeometry(2.0,0.12,2.6), laneMat);
+          seg.position.set(side*d, -0.04, lz);
+          seg.receiveShadow = true;
+          scene.add(seg);
+        }
+      });
+    });
+
+    // back rows of houses fronting those lanes / filling the blocks
+    var rowXs = [11.6, 16.4, 21.2];
+    var n = 0;
+    [-1,1].forEach(function(side){
+      rowXs.forEach(function(rx, ri){
+        for(var z = zStart - 1; z > zEnd; z -= 5.4){
+          n++;
+          var jitterZ = (prand(n)-0.5) * 1.6;
+          var zz = z + jitterZ;
+          // keep the side lanes clear
+          var onLane = laneZs.some(function(lz){ return Math.abs(zz - lz) < 2.6; });
+          if(onLane) continue;
+          if(prand(n+500) < 0.22) continue;              // occasional gap = yards
+          var rot = (ri % 2 === 0)
+            ? (side > 0 ? -Math.PI/2 : Math.PI/2)        // face the lane
+            : (prand(n+900) > 0.5 ? 0 : Math.PI);
+          addDecorHouse(side*(rx + (prand(n+120)-0.5)*0.8), zz, 0, rot);
+        }
+      });
+    });
+
+    // tree belts filling the gaps between blocks and softening the far edges
+    var m = 0;
+    [-1,1].forEach(function(side){
+      for(var z = zStart + 2; z > zEnd - 2; z -= 3.4){
+        [9.4, 14.6, 20.2, 26.0].forEach(function(tx){
+          m++;
+          if(prand(m+7) < 0.42) return;
+          var zz = z + (prand(m+31)-0.5) * 1.8;
+          var onLane = laneZs.some(function(lz){ return Math.abs(zz - lz) < 2.2; });
+          if(onLane && tx < 26) return;
+          addDecorTree(side*(tx + (prand(m+77)-0.5)*1.2), zz);
+        });
+      }
+    });
+
+    // dense treeline closing off the far ends of the street
+    for(var k=0;k<18;k++){
+      var ex = -28 + k*3.3 + (prand(k+201)-0.5)*1.2;
+      addDecorTree(ex, zStart + 6 + (prand(k+303)-0.5)*2.5);
+      addDecorTree(ex, zEnd - 6 + (prand(k+404)-0.5)*2.5);
+    }
+  }
+
+  function buildingCenter(code){
+    return BUILD_POS[code];
+  }
+
+  function buildTemple(center){
+    var g = new THREE.Group();
+    addBox(g,0.35,2.1,0.35,0x7a2b1c,-1.15,1.05,-0.7);
+    addBox(g,0.35,2.1,0.35,0x7a2b1c,1.15,1.05,-0.7);
+    addBox(g,2.9,0.32,0.45,0x8a3320,0,2.2,-0.7);
+    var roofMat = new THREE.MeshStandardMaterial({map:tileRoofTexture('#5c1f13'), flatShading:true, roughness:0.85});
+    var roof = new THREE.Mesh(new THREE.ConeGeometry(2.2,1.1,4), roofMat);
+    roof.position.set(0,2.75,-0.7); roof.rotation.y=Math.PI/4; roof.scale.set(1,0.55,1.3);
+    roof.castShadow=true; g.add(roof);
+    addBox(g,0.7,0.55,0.1,0xd4a017,0,1.7,-0.48);
+    addCyl(g,0.16,0.16,0.55,0xc23616,-0.95,1.9,0.4);
+    addCyl(g,0.13,0.17,0.04,0xd4a017,-0.95,2.18,0.4);
+    addCyl(g,0.16,0.16,0.55,0xc23616,0.95,1.9,0.4);
+    addCyl(g,0.13,0.17,0.04,0xd4a017,0.95,2.18,0.4);
+    addBox(g,1.0,0.55,0.55,0xc23616,0,0.28,1.1);
+    addBox(g,1.1,0.08,0.65,0x5c1f13,0,0.58,1.1);
+    var tempShadow = makeShadowBlob(2.0); tempShadow.position.set(0,0.015,-0.4); g.add(tempShadow);
+    g.position.set(center.x, 0, center.z-0.3);
+    scene.add(g);
+    var npc = spawnNPC('n', center.npcX, center.npcZ, Math.PI/2);
+    addQuestArrow(2, center.npcX, center.npcZ);
+    addRectCollider(center.x, center.z-0.7, 1.9, 1.4);
+    return g;
+  }
+
+  function buildStore(center){
+    var g = new THREE.Group();
+    var wallMat = new THREE.MeshStandardMaterial({map:woodTexture('#8a6b3e'), flatShading:true, roughness:0.88});
+    var wallMesh = new THREE.Mesh(new THREE.BoxGeometry(2.6,1.7,1.6), wallMat);
+    wallMesh.position.set(0,0.85,-0.4); wallMesh.castShadow=true; wallMesh.receiveShadow=true; g.add(wallMesh);
+    addBox(g,2.8,0.12,1.8,0x6b5230,0,1.72,-0.4);
+    var awning = new THREE.Mesh(new THREE.BoxGeometry(2.9,0.1,1.0), flatMat(0xc23616,0.8));
+    awning.position.set(0,1.55,0.55); awning.rotation.x=-0.35;
+    awning.castShadow=true; g.add(awning);
+    addBox(g,0.95,0.85,0.7,0xc23616,-0.6,0.42,0.75);
+    addBox(g,0.95,0.06,0.7,0x5c1f13,-0.6,0.86,0.75);
+    var colors=[0xc23616,0xd4a017,0x4c7a51];
+    for(var i=0;i<3;i++){ addSphere(g,0.14,colors[i], -0.9+i*0.3, 0.98, 0.72); }
+    var storeShadow = makeShadowBlob(1.8); storeShadow.position.set(0,0.015,-0.1); g.add(storeShadow);
+    g.position.set(center.x, 0, center.z-0.3);
+    scene.add(g);
+    var npc = spawnNPC('m', center.npcX, center.npcZ, -Math.PI/2);
+    addQuestArrow(3, center.npcX, center.npcZ);
+    addRectCollider(center.x, center.z-0.4, 1.7, 1.2);
+    return g;
+  }
+
+  function buildHall(center){
+    var g = new THREE.Group();
+    var roofMat = new THREE.MeshStandardMaterial({map:tileRoofTexture('#d4a017'), flatShading:true, roughness:0.8});
+    var roof = new THREE.Mesh(new THREE.ConeGeometry(2.4,1.5,4), roofMat);
+    roof.position.set(0,2.0,-0.4); roof.rotation.y=Math.PI/4; roof.scale.set(1,0.45,1.4);
+    roof.castShadow=true; g.add(roof);
+    addCyl(g,0.12,0.12,1.5,0x6b5230,-1.2,0.75,-1.3);
+    addCyl(g,0.12,0.12,1.5,0x6b5230,1.2,0.75,-1.3);
+    addCyl(g,0.12,0.12,1.5,0x6b5230,-1.2,0.75,0.5);
+    addCyl(g,0.12,0.12,1.5,0x6b5230,1.2,0.75,0.5);
+    addBox(g,1.9,0.55,0.6,0xe7d9b8,-0.6,0.28,0.9);
+    addBox(g,1.9,0.55,0.6,0xe7d9b8,0.6,0.28,-1.6);
+    for(var i=0;i<3;i++){
+      addSphere(g,0.07,0xe8c76b,-1.1+i*1.1,1.55,-1.3);
+    }
+    var hallShadow = makeShadowBlob(2.1); hallShadow.position.set(0,0.015,-0.4); g.add(hallShadow);
+    g.position.set(center.x, 0, center.z-0.3);
+    scene.add(g);
+    var npc = spawnNPC('k', center.npcX, center.npcZ, Math.PI/2);
+    addQuestArrow(4, center.npcX, center.npcZ);
+    addRectCollider(center.x, center.z-0.4, 1.7, 1.9);
+    return g;
+  }
+
+  function buildOffice(center){
+    var g = new THREE.Group();
+    var wallMat = new THREE.MeshStandardMaterial({map:woodTexture('#4a4038'), flatShading:true, roughness:0.9});
+    var wallMesh = new THREE.Mesh(new THREE.BoxGeometry(2.6,2.0,1.7), wallMat);
+    wallMesh.position.set(0,1.0,-0.4); wallMesh.castShadow=true; wallMesh.receiveShadow=true; g.add(wallMesh);
+    addBox(g,2.7,0.12,1.8,0x2b2620,0,2.06,-0.4);
+    addBox(g,0.55,0.9,0.06,0x1b1712,0,0.55,0.46);
+    addBox(g,0.7,0.55,0.06,0x9fc7e0,-0.75,1.15,0.46);
+    addBox(g,0.7,0.55,0.06,0x9fc7e0,0.75,1.15,0.46);
+    var officeShadow = makeShadowBlob(1.75); officeShadow.position.set(0,0.015,-0.1); g.add(officeShadow);
+    g.position.set(center.x, 0, center.z-0.3);
+    scene.add(g);
+    var npc = spawnNPC('q', center.npcX, center.npcZ, -Math.PI/2);
+    addQuestArrow(5, center.npcX, center.npcZ);
+    addRectCollider(center.x, center.z-0.4, 1.6, 1.2);
+    return g;
+  }
+
+  function buildBuildings(){
+    [2,3,4,5].forEach(function(code){
+      var center = buildingCenter(code);
+      var group;
+      if(code===2) group = buildTemple(center);
+      else if(code===3) group = buildStore(center);
+      else if(code===4) group = buildHall(center);
+      else group = buildOffice(center);
+      buildingMeshes[code] = {group:group, done:false};
+    });
+  }
+
+  function markDone(code){
+    var b = buildingMeshes[code];
+    if(!b || b.done) return;
+    b.done = true;
+    b.group.traverse(function(m){
+      if(m.isMesh) m.material.color.multiplyScalar(0.62);
+    });
+    var check = new THREE.Sprite(new THREE.SpriteMaterial({color:0xffffff, transparent:true}));
+    var canvasEl = document.createElement('canvas');
+    canvasEl.width=64; canvasEl.height=64;
+    var ctx = canvasEl.getContext('2d');
+    ctx.fillStyle='#4c7a51'; ctx.beginPath(); ctx.arc(32,32,28,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=6; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(18,33); ctx.lineTo(28,43); ctx.lineTo(46,20); ctx.stroke();
+    var tex = new THREE.CanvasTexture(canvasEl);
+    check.material.map = tex;
+    check.scale.set(0.5,0.5,0.5);
+    var center = buildingCenter(code);
+    check.position.set(center.x, 2.6, center.z-0.3);
+    scene.add(check);
+    b.checkSprite = check;
+  }
+
+  function resetBuildings(){
+    Object.keys(buildingMeshes).forEach(function(k){
+      var b = buildingMeshes[k];
+      if(!b.done) return;
+      b.done = false;
+      b.group.traverse(function(m){
+        if(m.isMesh) m.material.color.multiplyScalar(1/0.62);
+      });
+      if(b.checkSprite){ scene.remove(b.checkSprite); b.checkSprite=null; }
+    });
+  }
+
+  function initThree(){
+    if(threeReady) return;
+    threeReady = true;
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xc3d7e8);
+    // fog removed per user request — sky dome + camera framing handle depth instead
+
+    var aspect = el.threeWrap.clientWidth / el.threeWrap.clientHeight;
+    camera = new THREE.OrthographicCamera(-CAM_D*aspect, CAM_D*aspect, CAM_D, -CAM_D, 0.1, 120);
+
+    renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    el.threeWrap.appendChild(renderer.domElement);
+
+    var skyMat = new THREE.MeshBasicMaterial({map:skyTexture(), side:THREE.BackSide});
+    skyMat.fog = false;
+    var sky = new THREE.Mesh(new THREE.SphereGeometry(90,24,16), skyMat);
+    scene.add(sky);
+
+    var hemi = new THREE.HemisphereLight(0xfff2d8, 0x4a4a50, 0.8);
+    scene.add(hemi);
+    var sun = new THREE.DirectionalLight(0xffe9c2, 0.95);
+    sun.position.set(14,20,10);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048,2048);
+    sun.shadow.camera.left=-22; sun.shadow.camera.right=22;
+    sun.shadow.camera.top=22; sun.shadow.camera.bottom=-22;
+    scene.add(sun);
+    var fill = new THREE.DirectionalLight(0xcfe0ff, 0.3);
+    fill.position.set(-12,9,-8);
+    scene.add(fill);
+
+    buildGround();
+    buildBuildings();
+    initLabels();
+
+    playerRig = instantiateCharacter('a');
+    playerGroup = playerRig.root;
+    scene.add(playerGroup);
+    playRigAction(playerRig, 'idle');
+
+    resizeThree();
+    window.addEventListener('resize', resizeThree);
+
+    var dragging=false, lastX=0;
+    renderer.domElement.addEventListener('mousedown', function(e){dragging=true; lastX=e.clientX;});
+    window.addEventListener('mouseup', function(){dragging=false;});
+    window.addEventListener('mousemove', function(e){
+      if(!dragging) return;
+      camAngle.theta += (e.clientX-lastX)*0.005;
+      lastX = e.clientX;
+    });
+    renderer.domElement.addEventListener('touchstart', function(e){
+      if(e.touches.length===1){ dragging=true; lastX=e.touches[0].clientX; }
+    }, {passive:true});
+    window.addEventListener('touchend', function(){dragging=false;});
+    window.addEventListener('touchmove', function(e){
+      if(!dragging || e.touches.length!==1) return;
+      camAngle.theta += (e.touches[0].clientX-lastX)*0.005;
+      lastX = e.touches[0].clientX;
+    }, {passive:true});
+
+    animate();
+  }
+
+  function resizeThree(){
+    if(!renderer) return;
+    var w = el.threeWrap.clientWidth, h = el.threeWrap.clientHeight;
+    var aspect = w/h;
+    camera.left=-CAM_D*aspect; camera.right=CAM_D*aspect; camera.top=CAM_D; camera.bottom=-CAM_D;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w,h);
+  }
+
+  function updateCamera(){
+    var r = camAngle.radius;
+    camera.position.x = camTarget.x + r*Math.sin(camAngle.phi)*Math.cos(camAngle.theta);
+    camera.position.z = camTarget.z + r*Math.sin(camAngle.phi)*Math.sin(camAngle.theta);
+    camera.position.y = r*Math.cos(camAngle.phi);
+    camera.lookAt(camTarget.x, 1.2, camTarget.z);
+  }
+
+  /* ---------------- Free movement + collision ---------------- */
+  var keys = {up:false, down:false, left:false, right:false};
+  var joystickVec = {x:0, y:0}; // x: screen-right(-1..1), y: screen-forward(-1..1)
+  var MOVE_SPEED = 6.2; // units per second
+  var clock = new THREE.Clock();
+
+  function collidesAt(x,z){
+    if(x < -WORLD_HALF_X+PLAYER_R || x > WORLD_HALF_X-PLAYER_R) return true;
+    if(z < -WORLD_HALF_Z+PLAYER_R || z > WORLD_HALF_Z-PLAYER_R) return true;
+    for(var i=0;i<colliders.length;i++){
+      var c = colliders[i];
+      if(c.type==='rect'){
+        if(x > c.minX-PLAYER_R && x < c.maxX+PLAYER_R && z > c.minZ-PLAYER_R && z < c.maxZ+PLAYER_R) return true;
+      } else {
+        var dx=x-c.x, dz=z-c.z;
+        if(dx*dx+dz*dz < (c.r+PLAYER_R)*(c.r+PLAYER_R)) return true;
+      }
+    }
+    return false;
+  }
+
+  function stepMovement(delta){
+    // Movement is camera-relative: "up"/forward always walks away from the
+    // camera (screen-up), "right" always strafes to screen-right, etc,
+    // regardless of the fixed isometric viewing angle.
+    var camForwardX = -Math.cos(camAngle.theta), camForwardZ = -Math.sin(camAngle.theta);
+    var camRightX = Math.sin(camAngle.theta), camRightZ = -Math.cos(camAngle.theta);
+
+    var f = 0, r = 0;
+    if(keys.up) f += 1;
+    if(keys.down) f -= 1;
+    if(keys.right) r += 1;
+    if(keys.left) r -= 1;
+    f += joystickVec.y;
+    r += joystickVec.x;
+    var mag = Math.sqrt(f*f + r*r);
+    var moving = mag > 0.06;
+    if(moving){
+      var speedScale = Math.min(mag,1);
+      var dirF = f/mag, dirR = r/mag;
+      var dx = dirF*camForwardX + dirR*camRightX;
+      var dz = dirF*camForwardZ + dirR*camRightZ;
+      var dlen = Math.sqrt(dx*dx+dz*dz) || 1;
+      dx/=dlen; dz/=dlen;
+      var dist = MOVE_SPEED*speedScale*delta;
+      var nx = state.pos.x + dx*dist;
+      var nz = state.pos.z + dz*dist;
+      // if the player is already overlapping something (shouldn't normally happen,
+      // but guards against ever getting permanently stuck), allow movement through it
+      var alreadyStuck = collidesAt(state.pos.x, state.pos.z);
+      if(alreadyStuck || !collidesAt(nx, state.pos.z)) state.pos.x = nx;
+      if(alreadyStuck || !collidesAt(state.pos.x, nz)) state.pos.z = nz;
+      var targetHeading = Math.atan2(dx, dz);
+      var diff = targetHeading - state.heading;
+      while(diff>Math.PI) diff-=Math.PI*2;
+      while(diff<-Math.PI) diff+=Math.PI*2;
+      state.heading += diff*0.25;
+    }
+    return moving;
+  }
+
+  /* ---------------- Floating location labels ---------------- */
+  var labelEls = {};
+  function initLabels(){
+    Object.keys(BUILD_POS).forEach(function(code){
+      var div = document.createElement('div');
+      div.className = 'loc-label';
+      div.textContent = npcMeta[code].icon + ' ' + npcMeta[code].label;
+      el.labelsLayer.appendChild(div);
+      labelEls[code] = div;
+    });
+  }
+  var labelProjVec = new THREE.Vector3();
+  function updateLabels(){
+    var w = el.threeWrap.clientWidth, h = el.threeWrap.clientHeight;
+    Object.keys(BUILD_POS).forEach(function(code){
+      var p = BUILD_POS[code];
+      labelProjVec.set(p.x, 3.35, p.z-0.3);
+      labelProjVec.project(camera);
+      var sx = (labelProjVec.x*0.5+0.5)*w;
+      var sy = (1-(labelProjVec.y*0.5+0.5))*h;
+      var div = labelEls[code];
+      div.style.left = sx+'px';
+      div.style.top = sy+'px';
+      if(buildingMeshes[code] && buildingMeshes[code].done) div.classList.add('done');
+      else div.classList.remove('done');
+    });
+  }
+
+  function animate(){
+    requestAnimationFrame(animate);
+    if(!scene) return;
+    var delta = Math.min(clock.getDelta(), 0.08);
+    var moving = (state.mode==='playing') ? stepMovement(delta) : false;
+
+    playerGroup.position.x = state.pos.x;
+    playerGroup.position.z = state.pos.z;
+    playerGroup.rotation.y = state.heading;
+    camTarget.x += (playerGroup.position.x - camTarget.x)*0.14;
+    camTarget.z += (playerGroup.position.z - camTarget.z)*0.14;
+
+    if(playerRig){
+      playRigAction(playerRig, moving ? 'walk' : 'idle');
+      playerRig.mixer.update(delta);
+    }
+    npcRigs.forEach(function(rig){ rig.mixer.update(delta); });
+    updateQuestArrows(delta);
+
+    updateCamera();
+    updateLabels();
+    updateInteractHint();
+    renderer.render(scene, camera);
+  }
+
+  /* ---------------- Interaction ---------------- */
+  var _lastInteractReady = null;
+  function updateInteractHint(){
+    if(!el.interactBtn) return;
+    var ready = false;
+    if(state.mode === 'playing'){
+      var doneCount = dialogueOrder.filter(function(k){return state.completed[k];}).length;
+      ready = !!interactTargetCode() || (doneCount===4 && nearFinalSpot() && !state.completed._quizStarted);
+    }
+    if(ready !== _lastInteractReady){
+      _lastInteractReady = ready;
+      el.interactBtn.classList.toggle('ready', ready);
+    }
+  }
+
+  function interactTargetCode(){
+    var best = null, bestDist = INTERACT_RADIUS;
+    Object.keys(BUILD_POS).forEach(function(k){
+      var code = Number(k);
+      var p = BUILD_POS[code];
+      var npcX = p.npcX, npcZ = p.npcZ;
+      var d = Math.sqrt((state.pos.x-npcX)*(state.pos.x-npcX) + (state.pos.z-npcZ)*(state.pos.z-npcZ));
+      if(d < bestDist){ bestDist = d; best = code; }
+    });
+    return best;
+  }
+  function nearFinalSpot(){
+    return interactTargetCode()===2;
+  }
+
+  /* ---------------- Objective / evidence UI ---------------- */
+  function refreshObjective(){
+    var doneCount = dialogueOrder.filter(function(k){return state.completed[k];}).length;
+    el.objectiveText.textContent = objectiveTextByStep[Math.min(doneCount, objectiveTextByStep.length-1)];
+    el.evidenceCount.textContent = doneCount;
+  }
+
+  /* ---------------- Dialogue flow (VN presentation) ---------------- */
+  var activeTalkKey = null;
+  var typeTimer = null;
+
+  function typeText(text, onDone){
+    clearInterval(typeTimer);
+    el.dialogueText.innerHTML='';
+    var i = 0;
+    var caret = document.createElement('span');
+    caret.className='caret';
+    caret.textContent='｜';
+    function finish(){
+      clearInterval(typeTimer);
+      el.dialogueText.textContent = text;
+      if(onDone) onDone();
+    }
+    el.dialogueText.onclick = finish;
+    typeTimer = setInterval(function(){
+      i++;
+      el.dialogueText.textContent = text.slice(0,i);
+      el.dialogueText.appendChild(caret);
+      if(i>=text.length){ finish(); }
+    }, 28);
+  }
+
+  function openDialogue(code){
+    var meta = npcMeta[code];
+    activeTalkKey = meta.talk;
+    el.vnStamp.classList.remove('show');
+    el.vnStamp.innerHTML='';
+    if(state.completed[activeTalkKey]){
+      showRevisitNote(meta);
+      return;
+    }
+    var d = dialogues[activeTalkKey];
+    state.mode='dialogue';
+    el.dialogueLayer.classList.add('active');
+    el.dialogueSpeaker.textContent = d.speaker;
+    el.feedbackNote.style.display='none';
+    el.dialogueContinue.style.display='none';
+    el.dialogueChoices.innerHTML='';
+    typeText(d.text, function(){
+      d.choices.forEach(function(choice){
+        var btn = document.createElement('button');
+        btn.className='choice-btn';
+        btn.textContent = choice.label;
+        btn.onclick = function(){ resolveChoice(choice, btn); };
+        el.dialogueChoices.appendChild(btn);
+      });
+    });
+  }
+
+  function showRevisitNote(meta){
+    state.mode='dialogue';
+    el.dialogueLayer.classList.add('active');
+    el.dialogueSpeaker.textContent = meta.label;
+    el.dialogueChoices.innerHTML='';
+    el.feedbackNote.style.display='none';
+    el.dialogueContinue.style.display='inline-block';
+    el.dialogueContinue.onclick = closeDialogue;
+    typeText('這裡已經處理過了，證據都記在筆記本裡了。');
+  }
+
+  function resolveChoice(choice, btnEl){
+    var allBtns = el.dialogueChoices.querySelectorAll('.choice-btn');
+    allBtns.forEach(function(b){ b.disabled = true; });
+    btnEl.classList.add(choice.correct ? 'correct' : 'wrong');
+    el.feedbackNote.style.display='block';
+    el.feedbackNote.textContent = (choice.correct? '✅ ' : '⚠️ ') + choice.fb;
+    el.dialogueContinue.style.display='inline-block';
+    el.vnStamp.innerHTML = choice.correct ? stampSVG.correct : stampSVG.wrong;
+    el.vnStamp.classList.remove('show');
+    void el.vnStamp.offsetWidth;
+    el.vnStamp.classList.add('show');
+    el.dialogueContinue.onclick = function(){
+      state.completed[activeTalkKey] = true;
+      var code = Object.keys(npcMeta).find(function(k){ return npcMeta[k].talk===activeTalkKey; });
+      markDone(Number(code));
+      evidenceLog.push({icon:npcMeta[code].icon, text: npcMeta[code].label + '：' + choice.label});
+      refreshObjective();
+      closeDialogue();
+      var doneCount = dialogueOrder.filter(function(k){return state.completed[k];}).length;
+      if(doneCount===4){
+        setTimeout(function(){
+          el.objectiveText.innerHTML = '<b>任務目標：</b>回到廟口前，按 E 進行結案考驗';
+        }, 200);
+      }
+    };
+  }
+
+  function closeDialogue(){
+    clearInterval(typeTimer);
+    el.vnStamp.classList.remove('show');
+    el.dialogueLayer.classList.remove('active');
+    state.mode='playing';
+  }
+
+  /* ---------------- Notebook ---------------- */
+  function openNotebook(){
+    el.notebookList.innerHTML='';
+    if(evidenceLog.length===0){
+      el.notebookList.innerHTML = '<div class="evidence-item pending">尚未記錄任何情資，去走訪四個地點吧。</div>';
+    } else {
+      evidenceLog.forEach(function(e){
+        var div = document.createElement('div');
+        div.className='evidence-item';
+        div.innerHTML = '<span class="stamp-icon">'+e.icon+'</span><span>'+e.text+'</span>';
+        el.notebookList.appendChild(div);
+      });
+    }
+    el.notebookLayer.classList.add('active');
+  }
+  el.evidenceBadge.addEventListener('click', openNotebook);
+  el.notebookClose.addEventListener('click', function(){ el.notebookLayer.classList.remove('active'); });
+
+  /* ---------------- Quiz ---------------- */
+  var quizAnswered = 0;
+  var quizCorrect = 0;
+  function openQuiz(){
+    state.mode='quiz';
+    quizAnswered = 0;
+    quizCorrect = 0;
+    el.quizList.innerHTML='';
+    el.quizResult.style.display='none';
+    el.quizSubmit.style.display='none';
+    quizItems.forEach(function(item, idx){
+      var wrap = document.createElement('div');
+      wrap.className='quiz-item';
+      var p = document.createElement('p');
+      p.textContent = (idx+1)+'. '+item.text;
+      wrap.appendChild(p);
+      var opts = document.createElement('div');
+      opts.className='quiz-opts';
+      ['legal','illegal'].forEach(function(kind){
+        var b = document.createElement('button');
+        b.className = 'quiz-opt '+kind;
+        b.textContent = kind==='legal' ? '合法拜票' : '賄選行為';
+        b.onclick = function(){
+          var allOpts = opts.querySelectorAll('.quiz-opt');
+          allOpts.forEach(function(o){o.disabled=true;});
+          if(kind===item.answer){ b.classList.add('selected-correct'); quizCorrect++; }
+          else {
+            b.classList.add('selected-wrong');
+            var correctBtn = Array.prototype.find.call(allOpts, function(o){return o.classList.contains(item.answer);});
+            if(correctBtn) correctBtn.classList.add('selected-correct');
+          }
+          var note = document.createElement('div');
+          note.style.fontSize='12px';
+          note.style.marginTop='6px';
+          note.style.color='#5a4b1f';
+          note.textContent = item.fb;
+          wrap.appendChild(note);
+          quizAnswered++;
+          if(quizAnswered===quizItems.length){
+            el.quizResult.style.display='block';
+            el.quizResult.textContent = '考驗完成！你答對了 '+quizCorrect+' / '+quizItems.length+' 題。';
+            el.quizSubmit.style.display='block';
+          }
+        };
+        opts.appendChild(b);
+      });
+      wrap.appendChild(opts);
+      el.quizList.appendChild(wrap);
+    });
+    el.quizLayer.classList.add('active');
+  }
+  el.quizSubmit.addEventListener('click', function(){
+    el.quizLayer.classList.remove('active');
+    goToEnd();
+  });
+
+  /* ---------------- Screens ---------------- */
+  function showScreen(id){
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
+  }
+
+  function startGame(){
+    state = {pos:{x:SPAWN_POS.x, z:SPAWN_POS.z}, heading:Math.PI, completed:{}, step:0, mode:'playing'};
+    evidenceLog.length = 0;
+    keys.up=keys.down=keys.left=keys.right=false; joystickVec.x=0; joystickVec.y=0;
+    showScreen('game-screen');
+    initThree();
+    resetBuildings();
+    if(playerGroup){
+      playerGroup.position.set(state.pos.x, 0, state.pos.z);
+      playerGroup.rotation.y = state.heading;
+      camTarget.set(state.pos.x, 0, state.pos.z);
+    }
+    clock.getDelta(); // reset delta so first frame after scene switch isn't huge
+    refreshObjective();
+  }
+
+  var endTiers = [
+    { min:5, title:'任務完成：清水里選風清朗',
+      badge:'🏅 成就解鎖：乾淨選舉守門人', short:'乾淨選舉守門人',
+      note:'五題全對！你已經能精準分辨合法拜票與賄選行為的界線，也懂得正確蒐證跟檢舉的方式。' },
+    { min:3, title:'任務完成：清水里風氣漸漸好轉',
+      badge:'🥈 成就解鎖：反賄選見習生', short:'反賄選見習生',
+      note:'大部分都判斷正確，對合法拜票與賄選的界線已經有基本概念，剩下沒答對的部分再多留意一下。' },
+    { min:0, title:'任務完成，但還有進步空間',
+      badge:'📘 成就解鎖：反賄選新手上路', short:'反賄選新手上路',
+      note:'這次判斷題答對的不多，代表合法拜票與賄選的界線還沒完全抓穩。建議重新遊玩一次，把每個場景的說明再看仔細一點。' }
+  ];
+  var currentEndTier = null;
+
+  function goToEnd(){
+    state.mode='end';
+    var tier = endTiers[endTiers.length-1];
+    for(var i=0;i<endTiers.length;i++){
+      if(quizCorrect >= endTiers[i].min){ tier = endTiers[i]; break; }
+    }
+    currentEndTier = tier;
+    el.endTitle.textContent = tier.title;
+    el.endBadge.textContent = tier.badge;
+    el.endNote.textContent = tier.note;
+    el.endScore.textContent = '結案考驗成績：'+quizCorrect+' / '+quizItems.length+' 題正確';
+    el.certCard.style.display = 'none';
+    el.certNameInput.value = '';
+    el.certSubmitBlock.style.display = 'none';
+    el.certStatus.textContent = '';
+    el.certStatus.className = 'cert-status';
+    el.certSubmitBtn.disabled = false;
+    el.certEmailInput.disabled = false;
+    el.certEmailInput.value = '';
+    certSubmitted = false;
+    lastCertData = null;
+    showScreen('end-screen');
+  }
+
+  function simpleCode(str){
+    var h = 0;
+    for(var i=0;i<str.length;i++){ h = ((h<<5)-h+str.charCodeAt(i))|0; }
+    return Math.abs(h).toString(36).toUpperCase().slice(0,6);
+  }
+
+  var lastCertData = null;
+  var certSubmitted = false;
+
+  function submitConfigured(){
+    return !!(SUBMIT_CONFIG.FORM_ACTION && SUBMIT_CONFIG.FIELDS && SUBMIT_CONFIG.FIELDS.email);
+  }
+
+  el.certGenerateBtn.addEventListener('click', function(){
+    var name = el.certNameInput.value.trim() || '匿名同仁';
+    var now = new Date();
+    var dateStr = now.getFullYear()+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0');
+    var scoreStr = quizCorrect+' / '+quizItems.length+' 題正確';
+    var tierShort = currentEndTier ? currentEndTier.short : '';
+    var code = 'CS-'+simpleCode(name+dateStr+quizCorrect+tierShort);
+    el.certName.textContent = name;
+    el.certDate.textContent = dateStr;
+    el.certScore.textContent = scoreStr;
+    el.certTier.textContent = tierShort;
+    el.certCode.textContent = '任務代號：'+code;
+    el.certCard.style.display = 'block';
+    lastCertData = {name:name, date:dateStr, score:scoreStr, tier:tierShort, code:code};
+    if(submitConfigured() && !certSubmitted){
+      el.certSubmitBlock.style.display = 'block';
+    }
+    el.certCard.scrollIntoView({behavior:'smooth', block:'center'});
+  });
+
+  function setCertStatus(msg, kind){
+    el.certStatus.textContent = msg;
+    el.certStatus.className = 'cert-status' + (kind ? ' '+kind : '');
+  }
+
+  el.certSubmitBtn.addEventListener('click', function(){
+    if(certSubmitted) return;
+    if(!lastCertData){ setCertStatus('請先產生完成證明。','err'); return; }
+    var email = el.certEmailInput.value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      setCertStatus('請輸入正確的電子郵件格式。','err');
+      return;
+    }
+    el.certSubmitBtn.disabled = true;
+    setCertStatus('登記中…');
+
+    var f = SUBMIT_CONFIG.FIELDS;
+    var body = new URLSearchParams();
+    if(f.name)  body.append(f.name,  lastCertData.name);
+    if(f.email) body.append(f.email, email);
+    if(f.date)  body.append(f.date,  lastCertData.date);
+    if(f.score) body.append(f.score, lastCertData.score);
+    if(f.tier)  body.append(f.tier,  lastCertData.tier);
+    if(f.code)  body.append(f.code,  lastCertData.code);
+
+    // Google Forms doesn't send CORS headers, so the response can't be read.
+    // no-cors still delivers the submission; we treat completion as success.
+    fetch(SUBMIT_CONFIG.FORM_ACTION, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: body.toString()
+    }).then(function(){
+      certSubmitted = true;
+      setCertStatus('✅ 登記完成，感謝參與！請截圖上方完成證明至政風室兌獎。','ok');
+      el.certEmailInput.disabled = true;
+    }).catch(function(err){
+      console.error('submit failed', err);
+      el.certSubmitBtn.disabled = false;
+      setCertStatus('⚠️ 登記失敗，請確認網路後再試一次，或直接截圖完成證明兌獎。','err');
+    });
+  });
+
+  el.startBtn.addEventListener('click', startGame);
+  el.howtoBtn.addEventListener('click', function(){
+    el.controlsHint.style.display = el.controlsHint.style.display==='none' ? 'block':'none';
+  });
+  el.replayBtn.addEventListener('click', function(){ showScreen('title-screen'); });
+
+  /* ---------------- Pause ---------------- */
+  function openPause(){
+    if(state.mode==='playing'){ state.mode='paused'; keys.up=keys.down=keys.left=keys.right=false; joystickVec.x=0; joystickVec.y=0; el.pauseLayer.classList.add('active'); }
+  }
+  function closePause(){ el.pauseLayer.classList.remove('active'); state.mode='playing'; clock.getDelta(); }
+  el.pauseToggle.addEventListener('click', openPause);
+  el.resumeBtn.addEventListener('click', closePause);
+  el.restartBtn.addEventListener('click', function(){ el.pauseLayer.classList.remove('active'); startGame(); });
+
+  /* ---------------- Interact ---------------- */
+  function interact(){
+    if(state.mode!=='playing') return;
+    var code = interactTargetCode();
+    var doneCount = dialogueOrder.filter(function(k){return state.completed[k];}).length;
+    if(doneCount===4 && nearFinalSpot() && !state.completed._quizStarted){
+      state.completed._quizStarted = true;
+      openQuiz();
+      return;
+    }
+    if(code){ openDialogue(code); }
+  }
+  // Respond on pointerdown for snappier touch feel, with a guard so the
+  // follow-up click event doesn't fire the interaction a second time.
+  (function(){
+    var viaPointer = false;
+    el.interactBtn.addEventListener('pointerdown', function(e){
+      e.preventDefault();
+      viaPointer = true;
+      interact();
+      setTimeout(function(){ viaPointer = false; }, 400);
+    });
+    el.interactBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      if(viaPointer) return;
+      interact();
+    });
+  })();
+
+  /* ---------------- Keyboard (continuous, hold-to-move) ---------------- */
+  function isTypingInField(e){
+    var t = e.target;
+    if(!t) return false;
+    var tag = (t.tagName || '').toLowerCase();
+    return tag === 'input' || tag === 'textarea' || tag === 'select' || t.isContentEditable;
+  }
+
+  window.addEventListener('keydown', function(e){
+    if(isTypingInField(e)) return;   // typing in name/email box: don't steal the keys
+    if(state.mode==='title') return;
+    var k = e.key.toLowerCase();
+    if(['arrowup','arrowdown','arrowleft','arrowright',' ','e','escape','n','w','a','s','d'].indexOf(k)>-1){
+      e.preventDefault();
+    }
+    if(k==='escape'){
+      if(state.mode==='playing') openPause();
+      else if(state.mode==='paused') closePause();
+      return;
+    }
+    if(k==='n'){ if(state.mode==='playing') openNotebook(); return; }
+    if(state.mode!=='playing') return;
+    if(k==='arrowup'||k==='w') keys.up=true;
+    else if(k==='arrowdown'||k==='s') keys.down=true;
+    else if(k==='arrowleft'||k==='a') keys.left=true;
+    else if(k==='arrowright'||k==='d') keys.right=true;
+    else if(k==='e') interact();
+  });
+  window.addEventListener('keyup', function(e){
+    var k = e.key.toLowerCase();
+    if(k==='arrowup'||k==='w') keys.up=false;
+    else if(k==='arrowdown'||k==='s') keys.down=false;
+    else if(k==='arrowleft'||k==='a') keys.left=false;
+    else if(k==='arrowright'||k==='d') keys.right=false;
+  });
+  window.addEventListener('blur', function(){ keys.up=keys.down=keys.left=keys.right=false; joystickVec.x=0; joystickVec.y=0; });
+  document.addEventListener('focusin', function(e){
+    if(isTypingInField(e)){ keys.up=keys.down=keys.left=keys.right=false; joystickVec.x=0; joystickVec.y=0; }
+  });
+
+  /* ---------------- Touch controls: virtual joystick ---------------- */
+  (function(){
+    var base = document.getElementById('joystick-base');
+    var knob = document.getElementById('joystick-knob');
+    if(!base || !knob) return;
+    var activePointerId = null;
+    var maxRadius = 33;
+
+    function setKnob(dx,dy){
+      knob.style.transform = 'translate(calc(-50% + '+dx+'px), calc(-50% + '+dy+'px))';
+    }
+    function resetKnob(){
+      setKnob(0,0);
+      joystickVec.x = 0; joystickVec.y = 0;
+    }
+
+    base.addEventListener('pointerdown', function(e){
+      e.preventDefault();
+      activePointerId = e.pointerId;
+      base.classList.add('dragging');
+      base.setPointerCapture(e.pointerId);
+      handleMove(e);
+    });
+    base.addEventListener('pointermove', function(e){
+      if(e.pointerId !== activePointerId) return;
+      e.preventDefault();
+      handleMove(e);
+    });
+    function endDrag(e){
+      if(e.pointerId !== activePointerId) return;
+      activePointerId = null;
+      base.classList.remove('dragging');
+      resetKnob();
+    }
+    base.addEventListener('pointerup', endDrag);
+    base.addEventListener('pointercancel', endDrag);
+    base.addEventListener('lostpointercapture', function(e){
+      if(e.pointerId === activePointerId){ activePointerId=null; base.classList.remove('dragging'); resetKnob(); }
+    });
+
+    function handleMove(e){
+      var rect = base.getBoundingClientRect();
+      var cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+      var dx = e.clientX - cx, dy = e.clientY - cy;
+      var dist = Math.sqrt(dx*dx+dy*dy);
+      if(dist > maxRadius){ dx = dx/dist*maxRadius; dy = dy/dist*maxRadius; }
+      setKnob(dx,dy);
+      joystickVec.x = dx/maxRadius;       // screen-right positive
+      joystickVec.y = -(dy/maxRadius);    // screen-up (forward) positive
+    }
+  })();
+
+  /* init */
+  el.startBtn.disabled = true;
+  el.startBtn.textContent = '角色素材載入中…';
+  preloadCharacters(function(ok){
+    el.startBtn.disabled = false;
+    el.startBtn.textContent = ok ? '開始任務' : '開始任務（部分素材載入失敗）';
+  });
+  showScreen('title-screen');
+})();
+</script>
+</body>
+</html>

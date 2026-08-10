@@ -82,11 +82,76 @@
     position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;
     padding:12px 14px;pointer-events:none;z-index:20;
   }
-  #objective{
-    background:rgba(27,35,64,.82);border:1px solid var(--gold);border-radius:6px;padding:8px 14px;
-    font-size:13px;max-width:60%;line-height:1.5;
+  #hud-spacer{flex:1;}
+
+  /* floating objective banner, top-centre */
+  #mission-banner{
+    position:absolute;top:calc(14px + env(safe-area-inset-top, 0px));left:50%;
+    transform:translateX(-50%) translateY(-8px);
+    display:none;align-items:center;gap:10px;
+    background:rgba(20,26,48,.62);
+    border:1px solid rgba(212,160,23,.55);
+    color:var(--paper);
+    padding:9px 18px;border-radius:22px;
+    font-size:14px;line-height:1.4;white-space:nowrap;
+    box-shadow:0 6px 18px rgba(0,0,0,.3);
+    z-index:22;pointer-events:none;
+    opacity:0;transition:opacity .35s ease, transform .35s ease;
+    max-width:88vw;
   }
-  #objective b{color:var(--gold-soft);}
+  #mission-banner.show{display:flex;opacity:1;transform:translateX(-50%) translateY(0);}
+  #mission-banner.bump{animation:bannerBump .5s ease;}
+  @keyframes bannerBump{
+    0%{transform:translateX(-50%) scale(1);}
+    35%{transform:translateX(-50%) scale(1.07);}
+    100%{transform:translateX(-50%) scale(1);}
+  }
+  #mission-progress{
+    color:var(--gold-soft);font-weight:700;font-family:'Noto Serif TC',serif;
+    background:rgba(0,0,0,.28);padding:2px 9px;border-radius:11px;font-size:13px;
+  }
+  #mission-progress:empty{display:none;}
+
+  /* prompt that appears beside the beacon */
+  #beacon-prompt{
+    position:absolute;display:none;transform:translate(-50%,-50%);
+    background:rgba(20,26,48,.86);border:1.5px solid var(--gold-soft);
+    color:var(--paper);font-size:13px;font-weight:700;
+    padding:7px 14px;border-radius:16px;white-space:nowrap;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);
+    z-index:23;pointer-events:none;
+    animation:promptPulse 1.4s ease-in-out infinite;
+  }
+  #beacon-prompt.show{display:block;}
+  @keyframes promptPulse{
+    0%,100%{box-shadow:0 4px 14px rgba(0,0,0,.4), 0 0 0 0 rgba(212,160,23,.5);}
+    50%{box-shadow:0 4px 14px rgba(0,0,0,.4), 0 0 0 10px rgba(212,160,23,0);}
+  }
+
+  /* centred mission briefing */
+  #mission-layer{
+    position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    background:rgba(10,12,24,.55);z-index:45;padding:20px;
+  }
+  #mission-layer.active{display:flex;}
+  #mission-box{
+    width:min(400px,92vw);background:var(--paper);color:var(--ink);
+    border-radius:12px;padding:26px 24px 22px;text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,.5);
+    border:1px solid rgba(212,160,23,.6);
+    animation:missionIn .32s cubic-bezier(.2,1.2,.4,1);
+  }
+  @keyframes missionIn{
+    0%{opacity:0;transform:translateY(14px) scale(.96);}
+    100%{opacity:1;transform:translateY(0) scale(1);}
+  }
+  #mission-icon{font-size:30px;margin-bottom:4px;}
+  #mission-title{
+    font-family:'Noto Serif TC',serif;font-weight:900;font-size:19px;
+    color:var(--lantern-red);margin-bottom:10px;letter-spacing:.04em;
+  }
+  #mission-text{font-size:14.5px;line-height:1.9;margin-bottom:20px;}
+  #mission-ok{width:100%;}
   #evidence-badge{
     background:var(--paper);color:var(--ink);border-radius:6px;padding:8px 12px;font-size:12px;font-weight:700;
     display:flex;align-items:center;gap:6px;box-shadow:0 6px 14px rgba(0,0,0,.3);pointer-events:auto;cursor:pointer;
@@ -323,13 +388,13 @@
   .loc-label.done{opacity:.55;}
 
   @media (max-width:640px){
-    #objective{font-size:11.5px;max-width:56%;}
+    #mission-banner{font-size:12.5px;padding:8px 14px;}
   }
   /* Touch devices get the on-screen controls regardless of screen width
      (landscape phones and tablets exceed 640px). */
   @media (hover:none) and (pointer:coarse){
     #mobile-controls{display:flex;}
-    #objective{font-size:11.5px;max-width:52%;}
+    #mission-banner{font-size:12.5px;padding:8px 14px;}
     #scene-hint{display:none;}
   }
   /* Short landscape screens: shrink controls so nothing is clipped. */
@@ -355,7 +420,7 @@
     <div class="brief-card">
       <span class="stamp">〔今日待辦〕</span><br><br>
       年底九合一選舉將至，清水里近日出現多起可疑情資。<br>
-      你是住在清水里的一般里民，今天要出門走走，途中會經過 <b>廟口</b>、<b>柑仔店</b>、<b>活動中心</b>、<b>里長辦公室</b> 四個地點，
+      你是住在清水里的一般里民，今天要出門走走，途中會經過 <b>巷口</b>、<b>柑仔店</b>、<b>活動中心</b>、<b>里長辦公室</b> 四個地點，
       看看能不能分辨哪些是合法拜票、哪些已經觸法賄選——並學會遇到賄選時該怎麼保護自己、正確檢舉。
     </div>
     <button class="primary-btn" id="start-btn">開始任務</button>
@@ -369,9 +434,11 @@
   <!-- GAME -->
   <div class="screen" id="game-screen">
     <div id="hud">
-      <div id="objective"><b>任務目標：</b><span id="objective-text">前往廟口，與王姐互動（按 E）</span></div>
+      <div id="hud-spacer"></div>
       <div id="evidence-badge">📒 <span id="evidence-count">0</span>/4</div>
     </div>
+    <div id="mission-banner"><span id="mission-banner-text"></span><span id="mission-progress"></span></div>
+    <div id="beacon-prompt"><span id="beacon-prompt-text">按 E</span></div>
     <button id="pause-toggle">Ⅱ</button>
     <div id="three-wrap"></div>
     <div id="labels-layer"></div>
@@ -401,7 +468,7 @@
   <div id="notebook-layer">
     <div id="notebook">
       <h2>📒 蒐證筆記本</h2>
-      <div class="sub">依「一接、二保、三打」原則，記下每次遭遇的人事時地物</div>
+      <div class="sub">記下每次遭遇的人、事、時、地、物</div>
       <div id="notebook-list"></div>
       <button class="primary-btn" id="notebook-close">關閉</button>
     </div>
@@ -427,11 +494,11 @@
       <span id="end-note">作業心得：拜票拜票，界線要拜清楚——文宣品是心意，現金招待是犯罪。</span>
     </div>
     <div class="mnemonic">
-      <span class="step">一接：接近了解狀況</span>
-      <span class="step">二保：保存人事時地物證據</span>
-      <span class="step">三打：撥打檢舉專線</span>
-      <span class="step">四訴：起訴先領 1/4 獎金</span>
-      <span class="step">五搞定：判決確定領全額</span>
+      <span class="step">不收受、不期約</span>
+      <span class="step">記下人、事、時、地、物</span>
+      <span class="step">保存證據，不湮滅</span>
+      <span class="step">不打草驚蛇</span>
+      <span class="step">儘速撥打檢舉專線</span>
     </div>
     <div class="hotline">☎ 0800-024-099（撥通後按 4）</div>
     <div class="hotline-note">檢舉人身分絕對保密・最高可獲高額檢舉獎金</div>
@@ -465,6 +532,16 @@
     </div>
 
     <button class="primary-btn" id="replay-btn">重新遊玩</button>
+  </div>
+
+  <!-- MISSION MODAL -->
+  <div id="mission-layer">
+    <div id="mission-box">
+      <div id="mission-icon">📋</div>
+      <div id="mission-title">任務</div>
+      <div id="mission-text"></div>
+      <button class="primary-btn" id="mission-ok">確定</button>
+    </div>
   </div>
 
   <!-- PAUSE -->
@@ -508,13 +585,13 @@
   /* ---------------- Town layout: one main street, gate at the entrance ---------------- */
   // Buildings sit off the road; each has an explicit roadside spot where its NPC stands.
   var BUILD_POS = {
-    2:{x:-7.0, z:2,    npcX:-4.1, npcZ:2.2},    // 廟口 (left)
+    2:{x:-7.0, z:2,    npcX:-4.1, npcZ:2.2},    // 巷口 (left)
     3:{x: 7.0, z:-6,   npcX: 4.1, npcZ:-5.8},   // 柑仔店 (right)
     4:{x:-7.0, z:-14,  npcX:-4.1, npcZ:-13.8},  // 活動中心 (left)
     5:{x: 7.0, z:-22,  npcX: 4.1, npcZ:-21.8}   // 里長辦公室 (right)
   };
   var npcMeta = {
-    2:{key:'temple', label:'廟口・王姐', icon:'⛩️', talk:'talk1'},
+    2:{key:'alley', label:'巷口・王姐', icon:'🏘️', talk:'talk1'},
     3:{key:'store', label:'柑仔店', icon:'🏪', talk:'talk2'},
     4:{key:'hall', label:'活動中心', icon:'🏮', talk:'talk3'},
     5:{key:'office', label:'里長辦公室', icon:'🏛️', talk:'talk4'}
@@ -541,13 +618,13 @@
   /* ---------------- Dialogue content ---------------- */
   var dialogues = {
     talk1:{
-      speaker:'廟口・王姐',
-      text:'「阿弟仔，來來來，平安符拿去，順便……這個紅包收下，記得投第3號喔，我們全家都靠他吃飯呢！」',
+      speaker:'巷口・王姐',
+      text:'「阿弟仔，來來來，剛好遇到你。這個紅包你收下，記得投 XX 號喔，我們全家都靠他吃飯呢！」',
       choices:[
         {label:'直接收下紅包，假裝沒聽到剛才那句話', correct:false,
          fb:'收下紅包等於當場成立對價關係——這已構成賄選的一環，身為選民絕對不能收！'},
         {label:'婉拒紅包，並默默記下時間、地點、對話內容', correct:true,
-         fb:'正確！「二保」就是要保存人事時地物證據，不動聲色蒐證，之後再撥打檢舉專線處理。'},
+         fb:'正確！記下人、事、時、地、物並保存證據，不動聲色蒐證，之後再撥打檢舉專線處理。'},
         {label:'當場大聲斥責王姐行賄', correct:false,
          fb:'打草驚蛇會讓對方湮滅證據或串供，正確做法是先冷靜蒐證，不要當場攤牌。'}
       ]
@@ -566,7 +643,7 @@
     },
     talk3:{
       speaker:'活動中心廣播',
-      text:'「來喔來喔，辦桌流水席開動囉！大家吃飽別忘記投給第 7 號村長候選人，還有摸彩送電視機喔！」',
+      text:'「來喔來喔，辦桌流水席開動囉！大家吃飽別忘記投給 XX 號里長候選人，還有摸彩送電視機喔！」',
       choices:[
         {label:'跟著大家一起入座吃辦桌，想說吃免錢的划算', correct:false,
          fb:'以聚餐、摸彩換取投票承諾，屬於典型的賄選手法，接受招待就是收賄的一環。'},
@@ -590,13 +667,6 @@
     }
   };
   var dialogueOrder = ['talk1','talk2','talk3','talk4'];
-  var objectiveTextByStep = [
-    '前往廟口，與王姐互動（按 E）',
-    '前往柑仔店，了解文宣品狀況（按 E）',
-    '前往活動中心，查看流水席（按 E）',
-    '前往里長辦公室，應對可疑訪客（按 E）',
-    '四個地點都走訪完了，回到入口的「清水里」牌樓下（發光處）按 E 結案'
-  ];
 
   /* ---------------- Quiz content ---------------- */
   var quizItems = [
@@ -626,7 +696,10 @@
   /* ---------------- DOM refs ---------------- */
   var el = {};
   ['title-screen','game-screen','end-screen','start-btn','howto-btn','controls-hint',
-   'three-wrap','labels-layer','objective-text','evidence-count','evidence-badge',
+   'three-wrap','labels-layer','evidence-count','evidence-badge',
+   'mission-banner','mission-banner-text','mission-progress',
+   'mission-layer','mission-box','mission-title','mission-text','mission-ok','mission-icon',
+   'beacon-prompt','beacon-prompt-text',
    'dialogue-layer','dialogue-speaker','dialogue-text','dialogue-choices','dialogue-continue','feedback-note',
    'vn-stamp',
    'notebook-layer','notebook-list','notebook-close',
@@ -800,7 +873,7 @@
     'lamp':             'models/furniture/lampRoundFloor.glb'
   };
   function preloadCharacters(onDone){
-    var keys = ['a','n','m','k','q'];
+    var keys = ['a','e','m','k','q'];
     var charPromises = keys.map(function(k){
       return loadGLTF('models/character-'+k+'.glb').then(function(gltf){ characterAssets[k]=gltf; });
     });
@@ -960,6 +1033,25 @@
     );
     // aim at the gate
     guideArrow.rotation.y = Math.atan2(0 - playerGroup.position.x, GATE_Z - playerGroup.position.z);
+  }
+
+  var _beaconProjVec = new THREE.Vector3();
+  function updateBeaconPrompt(){
+    if(!finalBeacon || !el.beaconPrompt) return;
+    var show = finalBeacon.visible && state.mode === 'playing';
+    if(!show){ el.beaconPrompt.classList.remove('show'); return; }
+    _beaconProjVec.set(0, 2.2, GATE_Z);
+    _beaconProjVec.project(camera);
+    // behind the camera or off-screen -> hide
+    if(_beaconProjVec.z > 1 || Math.abs(_beaconProjVec.x) > 1.25 || Math.abs(_beaconProjVec.y) > 1.25){
+      el.beaconPrompt.classList.remove('show');
+      return;
+    }
+    var w = el.threeWrap.clientWidth, h = el.threeWrap.clientHeight;
+    el.beaconPrompt.style.left = ((_beaconProjVec.x*0.5+0.5)*w) + 'px';
+    el.beaconPrompt.style.top  = ((1-(_beaconProjVec.y*0.5+0.5))*h) + 'px';
+    el.beaconPromptText.textContent = '按 ' + interactKeyLabel() + ' 結案';
+    el.beaconPrompt.classList.add('show');
   }
 
   function updateFinalBeacon(){
@@ -1263,26 +1355,36 @@
     return BUILD_POS[code];
   }
 
-  function buildTemple(center){
+  function buildAlley(center){
     var g = new THREE.Group();
-    addBox(g,0.35,2.1,0.35,0x7a2b1c,-1.15,1.05,-0.7);
-    addBox(g,0.35,2.1,0.35,0x7a2b1c,1.15,1.05,-0.7);
-    addBox(g,2.9,0.32,0.45,0x8a3320,0,2.2,-0.7);
-    var roofMat = new THREE.MeshStandardMaterial({map:tileRoofTexture('#5c1f13'), flatShading:true, roughness:0.85});
-    var roof = new THREE.Mesh(new THREE.ConeGeometry(2.2,1.1,4), roofMat);
-    roof.position.set(0,2.75,-0.7); roof.rotation.y=Math.PI/4; roof.scale.set(1,0.55,1.3);
-    roof.castShadow=true; g.add(roof);
-    addBox(g,0.7,0.55,0.1,0xd4a017,0,1.7,-0.48);
-    addCyl(g,0.16,0.16,0.55,0xc23616,-0.95,1.9,0.4);
-    addCyl(g,0.13,0.17,0.04,0xd4a017,-0.95,2.18,0.4);
-    addCyl(g,0.16,0.16,0.55,0xc23616,0.95,1.9,0.4);
-    addCyl(g,0.13,0.17,0.04,0xd4a017,0.95,2.18,0.4);
-    addBox(g,1.0,0.55,0.55,0xc23616,0,0.28,1.1);
-    addBox(g,1.1,0.08,0.65,0x5c1f13,0,0.58,1.1);
-    var tempShadow = makeShadowBlob(2.0); tempShadow.position.set(0,0.015,-0.4); g.add(tempShadow);
+    // low boundary wall with a gated alley entrance between two houses
+    var wallMat = new THREE.MeshStandardMaterial({map:woodTexture('#c9b9a0'), flatShading:true, roughness:0.92});
+    var wallL = new THREE.Mesh(new THREE.BoxGeometry(1.5,1.5,0.3), wallMat);
+    wallL.position.set(-1.35,0.75,0.15); wallL.castShadow=true; wallL.receiveShadow=true; g.add(wallL);
+    var wallR = new THREE.Mesh(new THREE.BoxGeometry(1.5,1.5,0.3), wallMat);
+    wallR.position.set(1.35,0.75,0.15); wallR.castShadow=true; wallR.receiveShadow=true; g.add(wallR);
+    // capping course on top of the wall
+    addBox(g,1.7,0.14,0.42,0xa8977c,-1.35,1.57,0.15);
+    addBox(g,1.7,0.14,0.42,0xa8977c, 1.35,1.57,0.15);
+    // gate posts either side of the alley mouth
+    addBox(g,0.28,2.0,0.28,0x8a6b3e,-0.6,1.0,0.15);
+    addBox(g,0.28,2.0,0.28,0x8a6b3e, 0.6,1.0,0.15);
+    addBox(g,1.5,0.2,0.32,0x6b5230,0,2.05,0.15);
+    // recessed alley floor running back between the buildings
+    var lane = new THREE.Mesh(new THREE.BoxGeometry(1.05,0.08,2.6), flatMat(0xcfc4a8,0.95));
+    lane.position.set(0,0.02,-1.1); lane.receiveShadow=true; g.add(lane);
+    // everyday alley clutter
+    addBox(g,0.46,0.62,0.42,0x4c7a51,-1.5,0.31,-0.65);   // recycling bin
+    addBox(g,0.5,0.08,0.46,0x3a5c3e,-1.5,0.66,-0.65);
+    addBox(g,0.42,0.5,0.38,0x8a6b3e, 1.5,0.25,-0.7);     // stacked crates
+    addBox(g,0.38,0.44,0.34,0x9a7b4a, 1.5,0.72,-0.7);
+    // small utility pole with a light
+    addCyl(g,0.07,0.08,2.2,0x6b6b6b, 1.75,1.1,0.45);
+    addBox(g,0.26,0.14,0.2,0xe8dcc0, 1.75,2.18,0.45);
+    var alleyShadow = makeShadowBlob(2.0); alleyShadow.position.set(0,0.015,-0.3); g.add(alleyShadow);
     g.position.set(center.x, 0, center.z-0.3);
     scene.add(g);
-    var npc = spawnNPC('n', center.npcX, center.npcZ, Math.PI/2);
+    var npc = spawnNPC('e', center.npcX, center.npcZ, Math.PI/2);
     addQuestArrow(2, center.npcX, center.npcZ);
     addRectCollider(center.x, center.z-0.7, 1.9, 1.4);
     return g;
@@ -1356,7 +1458,7 @@
     [2,3,4,5].forEach(function(code){
       var center = buildingCenter(code);
       var group;
-      if(code===2) group = buildTemple(center);
+      if(code===2) group = buildAlley(center);
       else if(code===3) group = buildStore(center);
       else if(code===4) group = buildHall(center);
       else group = buildOffice(center);
@@ -1593,6 +1695,7 @@
     npcRigs.forEach(function(rig){ rig.mixer.update(delta); });
     updateQuestArrows(delta);
     updateFinalBeacon();
+    updateBeaconPrompt();
     updateGuideArrow();
 
     updateCamera();
@@ -1634,11 +1737,58 @@
   }
 
   /* ---------------- Objective / evidence UI ---------------- */
+  function isTouchDevice(){
+    return window.matchMedia && window.matchMedia('(hover:none) and (pointer:coarse)').matches;
+  }
+  function interactKeyLabel(){
+    return isTouchDevice() ? '互動鍵' : 'E';
+  }
+
+  function setBanner(text, progress, bump){
+    el.missionBannerText.textContent = text;
+    el.missionProgress.textContent = progress || '';
+    el.missionBanner.classList.add('show');
+    if(bump){
+      el.missionBanner.classList.remove('bump');
+      void el.missionBanner.offsetWidth;
+      el.missionBanner.classList.add('bump');
+    }
+  }
+  function hideBanner(){ el.missionBanner.classList.remove('show'); }
+
   function refreshObjective(){
     var doneCount = dialogueOrder.filter(function(k){return state.completed[k];}).length;
-    el.objectiveText.textContent = objectiveTextByStep[Math.min(doneCount, objectiveTextByStep.length-1)];
     el.evidenceCount.textContent = doneCount;
+    if(state.completed._quizStarted){ hideBanner(); return; }
+    if(doneCount === 0){
+      setBanner('先去找巷口的王姐聊聊', '0/4');
+    } else if(doneCount < 4){
+      setBanner('再找其他人聊聊吧', doneCount + '/4');
+    } else {
+      setBanner('回「清水里」牌樓下的發光處結案', '4/4');
+    }
   }
+
+  /* ---------- centred mission briefing ---------- */
+  var _missionOnClose = null;
+  function showMission(title, text, btnLabel, onClose){
+    state.mode = 'mission';
+    keys.up=keys.down=keys.left=keys.right=false;
+    joystickVec.x=0; joystickVec.y=0;
+    el.missionTitle.textContent = title;
+    el.missionText.textContent = text;
+    el.missionOk.textContent = btnLabel || '確定';
+    _missionOnClose = onClose || null;
+    el.missionLayer.classList.add('active');
+  }
+  function closeMission(){
+    el.missionLayer.classList.remove('active');
+    state.mode = 'playing';
+    clock.getDelta();
+    var cb = _missionOnClose; _missionOnClose = null;
+    if(cb) cb();
+  }
+  el.missionOk.addEventListener('click', closeMission);
 
   /* ---------------- Dialogue flow (VN presentation) ---------------- */
   var activeTalkKey = null;
@@ -1722,10 +1872,14 @@
       refreshObjective();
       closeDialogue();
       var doneCount = dialogueOrder.filter(function(k){return state.completed[k];}).length;
-      if(doneCount===4){
+      if(doneCount < 4){
+        setBanner('再找其他人聊聊吧', doneCount + '/4', true);
+      } else {
         setTimeout(function(){
-          el.objectiveText.textContent = '回到入口「清水里」牌樓下（發光處）按 E 結案';
-        }, 200);
+          showMission('任務進度',
+            '四個地方都走完了！\n現在回到入口的「清水里」牌樓下，在發光的地方進行結案考驗。',
+            '出發');
+        }, 350);
       }
     };
   }
@@ -1830,7 +1984,11 @@
       camTarget.set(state.pos.x, 0, state.pos.z);
     }
     clock.getDelta(); // reset delta so first frame after scene switch isn't huge
+    hideBanner();
     refreshObjective();
+    showMission('任務開始',
+      '年底就要投票了，聽說清水里最近不太平靜。\n先去巷口找王姐聊聊，看看發生什麼事。',
+      '出發');
   }
 
   var endTiers = [
@@ -1987,6 +2145,8 @@
     var doneCount = dialogueOrder.filter(function(k){return state.completed[k];}).length;
     if(doneCount===4 && nearFinalSpot() && !state.completed._quizStarted){
       state.completed._quizStarted = true;
+      hideBanner();
+      el.beaconPrompt.classList.remove('show');
       openQuiz();
       return;
     }
@@ -2021,6 +2181,10 @@
     if(isTypingInField(e)) return;   // typing in name/email box: don't steal the keys
     if(state.mode==='title') return;
     var k = e.key.toLowerCase();
+    if(state.mode==='mission'){
+      if(k==='enter' || k===' ' || k==='e'){ e.preventDefault(); closeMission(); }
+      return;
+    }
     if(['arrowup','arrowdown','arrowleft','arrowright',' ','e','escape','n','w','a','s','d'].indexOf(k)>-1){
       e.preventDefault();
     }

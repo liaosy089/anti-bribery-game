@@ -274,7 +274,7 @@
   }
   .cert-input-row button{padding:9px 16px;font-size:13px;box-shadow:0 5px 0 #8a6e10, 0 8px 14px rgba(0,0,0,.3);white-space:nowrap;}
   .cert-input-row button:active{transform:translateY(4px);box-shadow:0 1px 0 #8a6e10, 0 2px 6px rgba(0,0,0,.25);}
-  .cert-privacy{margin-top:14px;text-align:left;
+  .cert-privacy{margin-bottom:14px;text-align:left;
     font-size:10.5px;line-height:1.75;color:rgba(242,232,213,.6);text-align:left;
     background:rgba(0,0,0,.18);border-left:2px solid rgba(212,160,23,.45);
     padding:8px 10px;border-radius:4px;
@@ -492,7 +492,7 @@
     <div id="end-score" class="end-score"></div>
     <div class="achievement">
       <div class="badge-title" id="end-badge">🏅 成就解鎖：乾淨選舉守門人</div>
-      <span id="end-note">作業心得：拜票拜票，界線要拜清楚——文宣品是心意，現金招待是犯罪。</span>
+      <span id="end-note"></span>
     </div>
     <div class="mnemonic">
       <span class="step">不收受、不期約</span>
@@ -507,6 +507,17 @@
 
     <div class="cert-section">
       <div class="cert-intro">填寫下列資料後，即可產生完成證明並登記，憑截圖至政風室兌換宣導小禮物</div>
+      <div class="cert-privacy" id="cert-privacy">
+        【蒐集個人資料告知事項】<br>
+        桃園市政府文化局政風室為辦理本次反賄選宣導活動之參與紀錄、兌獎核對及成效統計，
+        蒐集您的姓名、辦公室分機，以及本活動之完成日期、成績、等級及系統代號等資料。<br>
+        上開資料於本活動及後續成果統計、兌獎核對所需範圍內，由本局相關承辦人員以電腦系統或紙本方式處理及利用，
+        利用地區為中華民國境內，原則保存至活動結束後 6 個月，期滿後依規定處理。<br>
+        您得依個人資料保護法第 3 條規定，就您的個人資料行使查詢或閱覽、製給複製本、補充或更正、
+        停止蒐集處理或利用及刪除等權利；如欲行使上開權利，可洽本局政風室。<br>
+        若您選擇不提供姓名或辦公室分機，將無法辦理本活動之兌獎核對。<br>
+        聯絡電話：(03)332-2592 分機 8051。
+      </div>
       <div class="cert-fields">
         <input type="text" id="cert-name-input" placeholder="姓名" maxlength="20">
         <input type="text" id="cert-ext-input" placeholder="辦公室分機" maxlength="30">
@@ -525,17 +536,7 @@
         <div class="cert-footer">請截圖本畫面，至政風室兌換宣導小禮物</div>
       </div>
 
-      <div class="cert-privacy" id="cert-privacy">
-        【蒐集個人資料告知事項】<br>
-        桃園市政府文化局政風室為辦理本次反賄選宣導活動之參與紀錄、兌獎核對及成效統計，
-        蒐集您的姓名、辦公室分機，以及本活動之完成日期、成績、等級及系統代號等資料。<br>
-        上開資料於本活動及後續成果統計、兌獎核對所需範圍內，由本局相關承辦人員以電腦系統或紙本方式處理及利用，
-        利用地區為中華民國境內，原則保存至活動結束後 6 個月，期滿後依規定處理。<br>
-        您得依個人資料保護法第 3 條規定，就您的個人資料行使查詢或閱覽、製給複製本、補充或更正、
-        停止蒐集處理或利用及刪除等權利；如欲行使上開權利，可洽本局政風室。<br>
-        若您選擇不提供姓名或辦公室分機，將無法辦理本活動之兌獎核對。<br>
-        聯絡電話：(03)332-2592 分機 8051。
-      </div>
+      
     </div>
 
     <button class="primary-btn" id="replay-btn">重新遊玩</button>

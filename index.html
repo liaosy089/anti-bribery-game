@@ -29,7 +29,15 @@
   }
   #app{position:relative;width:100vw;height:100vh;height:100dvh;display:flex;align-items:center;justify-content:center;}
 
-  .screen{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;}
+  .screen{
+    position:absolute;inset:0;display:none;
+    align-items:center;justify-content:flex-start;flex-direction:column;
+    overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  }
+  /* auto margins centre the content when it fits, but let it scroll when it doesn't */
+  .screen.active > *{flex-shrink:0;}
+  .screen.active::before,
+  .screen.active::after{content:'';margin:auto;}
   .screen.active{display:flex;}
 
   /* ---------- Title screen ---------- */
@@ -159,7 +167,9 @@
   #evidence-badge span.icon{font-size:16px;}
 
   /* ---------- Game 3D viewport ---------- */
-  #game-screen{background:#0e1220;}
+  #game-screen{background:#0e1220;overflow:hidden;}
+  #game-screen.active::before,
+  #game-screen.active::after{display:none;}
   #three-wrap{position:absolute;inset:0;}
   #three-wrap canvas{display:block;width:100%;height:100%;}
   #scene-hint{
@@ -255,7 +265,10 @@
   #quiz-submit{width:100%;margin-top:6px;}
 
   /* ---------- End screen ---------- */
-  #end-screen{background:linear-gradient(180deg,var(--bg-night-2),var(--bg-night));text-align:center;padding:24px;}
+  #end-screen{
+    background:linear-gradient(180deg,var(--bg-night-2),var(--bg-night));text-align:center;
+    padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(32px + env(safe-area-inset-bottom,0px));
+  }
   #end-screen h2{font-family:'Noto Serif TC',serif;font-size:clamp(24px,5vw,34px);color:var(--gold-soft);margin-bottom:6px;}
   .end-score{font-size:14px;color:var(--paper);opacity:.85;margin-bottom:4px;}
 
@@ -1581,6 +1594,7 @@
   function resizeThree(){
     if(!renderer) return;
     var w = el.threeWrap.clientWidth, h = el.threeWrap.clientHeight;
+    if(w === 0 || h === 0) return;   // container hidden; skip until it is shown again
     var aspect = w/h;
     camera.left=-CAM_D*aspect; camera.right=CAM_D*aspect; camera.top=CAM_D; camera.bottom=-CAM_D;
     camera.updateProjectionMatrix();
@@ -1670,6 +1684,7 @@
   var labelProjVec = new THREE.Vector3();
   function updateLabels(){
     var w = el.threeWrap.clientWidth, h = el.threeWrap.clientHeight;
+    if(w === 0 || h === 0) return;
     Object.keys(BUILD_POS).forEach(function(code){
       var p = BUILD_POS[code];
       labelProjVec.set(p.x, 3.35, p.z-0.3);
@@ -1684,9 +1699,20 @@
     });
   }
 
+  function sceneIsVisible(){
+    // The end screen and the quiz fully cover the 3D view; the title screen
+    // hides it entirely. Rendering then is pure wasted GPU + DOM work.
+    if(state.mode === 'end' || state.mode === 'quiz' || state.mode === 'title') return false;
+    return el.threeWrap.clientWidth > 0 && el.threeWrap.clientHeight > 0;
+  }
+
   function animate(){
     requestAnimationFrame(animate);
     if(!scene) return;
+    if(!sceneIsVisible()){
+      clock.getDelta();   // keep delta from piling up while paused
+      return;
+    }
     var delta = Math.min(clock.getDelta(), 0.08);
     var moving = (state.mode==='playing') ? stepMovement(delta) : false;
 
@@ -1976,7 +2002,10 @@
   /* ---------------- Screens ---------------- */
   function showScreen(id){
     document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
-    document.getElementById(id).classList.add('active');
+    var target = document.getElementById(id);
+    target.classList.add('active');
+    // always start a newly shown screen at the top, never mid-scroll
+    target.scrollTop = 0;
   }
 
   function startGame(){
@@ -1985,6 +2014,7 @@
     keys.up=keys.down=keys.left=keys.right=false; joystickVec.x=0; joystickVec.y=0;
     showScreen('game-screen');
     initThree();
+    resizeThree();   // container was hidden; make sure the canvas matches it again
     resetBuildings();
     if(playerGroup){
       playerGroup.position.set(state.pos.x, 0, state.pos.z);

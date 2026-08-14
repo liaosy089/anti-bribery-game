@@ -158,7 +158,7 @@
     font-family:'Noto Serif TC',serif;font-weight:900;font-size:19px;
     color:var(--lantern-red);margin-bottom:10px;letter-spacing:.04em;
   }
-  #mission-text{font-size:14.5px;line-height:1.9;margin-bottom:20px;}
+  #mission-text{font-size:14.5px;line-height:1.9;margin-bottom:20px;white-space:pre-line;}
   #mission-ok{width:100%;}
   #evidence-badge{
     background:var(--paper);color:var(--ink);border-radius:6px;padding:8px 12px;font-size:12px;font-weight:700;
@@ -171,7 +171,7 @@
   #game-screen.active::before,
   #game-screen.active::after{display:none;}
   #three-wrap{position:absolute;inset:0;}
-  #three-wrap canvas{display:block;width:100%;height:100%;}
+  #three-wrap canvas{display:block;width:100%;height:100%;cursor:pointer;}
   #scene-hint{
     position:absolute;bottom:16px;right:16px;background:rgba(27,35,64,.72);border:1px solid rgba(212,160,23,.5);
     color:var(--gold-soft);font-size:11px;padding:6px 10px;border-radius:6px;pointer-events:none;
@@ -612,10 +612,10 @@
     5:{x: 7.0, z:-22,  npcX: 4.1, npcZ:-21.8}   // 里長辦公室 (right)
   };
   var npcMeta = {
-    2:{key:'alley', label:'巷口・王姐', icon:'🏘️', talk:'talk1'},
-    3:{key:'store', label:'柑仔店', icon:'🏪', talk:'talk2'},
-    4:{key:'hall', label:'活動中心', icon:'🏮', talk:'talk3'},
-    5:{key:'office', label:'里長辦公室', icon:'🏛️', talk:'talk4'}
+    2:{key:'alley', label:'巷口・王姐', who:'王姐', icon:'🏘️', talk:'talk1'},
+    3:{key:'store', label:'柑仔店', who:'柑仔店老闆', icon:'🏪', talk:'talk2'},
+    4:{key:'hall', label:'活動中心', who:'辦桌主持人', icon:'🏮', talk:'talk3'},
+    5:{key:'office', label:'里長辦公室', who:'可疑訪客', icon:'🏛️', talk:'talk4'}
   };
   var ROAD_HALF = 3.4;                      // paved carriageway half-width
   var WORLD_HALF_X = 5.0, WORLD_HALF_Z = 27; // walkable bounds (longer street)
@@ -1057,13 +1057,13 @@
   }
 
   var _beaconProjVec = new THREE.Vector3();
-  function updateBeaconPrompt(){
-    if(!finalBeacon || !el.beaconPrompt) return;
-    var show = finalBeacon.visible && state.mode === 'playing';
-    if(!show){ el.beaconPrompt.classList.remove('show'); return; }
-    _beaconProjVec.set(0, 2.2, GATE_Z);
+
+  // Shows a floating "press E to ..." label anchored to a world position.
+  // Used for both NPCs and the final beacon, so players never have to guess
+  // that E is the interact key.
+  function showWorldPrompt(x, y, z, label){
+    _beaconProjVec.set(x, y, z);
     _beaconProjVec.project(camera);
-    // behind the camera or off-screen -> hide
     if(_beaconProjVec.z > 1 || Math.abs(_beaconProjVec.x) > 1.25 || Math.abs(_beaconProjVec.y) > 1.25){
       el.beaconPrompt.classList.remove('show');
       return;
@@ -1071,8 +1071,68 @@
     var w = el.threeWrap.clientWidth, h = el.threeWrap.clientHeight;
     el.beaconPrompt.style.left = ((_beaconProjVec.x*0.5+0.5)*w) + 'px';
     el.beaconPrompt.style.top  = ((1-(_beaconProjVec.y*0.5+0.5))*h) + 'px';
-    el.beaconPromptText.textContent = '按 ' + interactKeyLabel() + ' 結案';
+    el.beaconPromptText.textContent = label;
     el.beaconPrompt.classList.add('show');
+  }
+
+  var _ray = new THREE.Raycaster();
+  var _ndc = new THREE.Vector2();
+
+  // Turn a screen click into a world point, then either talk to a nearby NPC
+  // or walk toward whatever was clicked.
+  function handleWorldClick(clientX, clientY){
+    var rect = renderer.domElement.getBoundingClientRect();
+    _ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    _ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    _ray.setFromCamera(_ndc, camera);
+
+    // Did the click land on (or very near) one of the four NPCs?
+    var best = null, bestDist = Infinity;
+    Object.keys(BUILD_POS).forEach(function(k){
+      var code = Number(k), p = BUILD_POS[code];
+      var v = new THREE.Vector3(p.npcX, 1.0, p.npcZ);
+      var d = _ray.ray.distanceToPoint(v);
+      if(d < 1.1 && d < bestDist){ bestDist = d; best = code; }
+    });
+
+    if(best !== null){
+      var p2 = BUILD_POS[best];
+      var dx = state.pos.x - p2.npcX, dz = state.pos.z - p2.npcZ;
+      if(Math.sqrt(dx*dx + dz*dz) <= INTERACT_RADIUS){
+        interact();                     // close enough: talk right away
+      } else {
+        clickTarget = {x:p2.npcX, z:p2.npcZ, code:best};   // otherwise walk over
+      }
+      return;
+    }
+
+    // Otherwise walk toward the clicked point on the ground
+    var hit = new THREE.Vector3();
+    if(_ray.ray.intersectPlane(_groundPlane, hit)){
+      clickTarget = {x:hit.x, z:hit.z, code:null};
+    }
+  }
+
+  function updateBeaconPrompt(){
+    if(!el.beaconPrompt) return;
+    if(state.mode !== 'playing'){ el.beaconPrompt.classList.remove('show'); return; }
+
+    // 1) Standing next to an NPC we have not talked to yet
+    var code = interactTargetCode();
+    if(code && !(buildingMeshes[code] && buildingMeshes[code].done)){
+      var p = BUILD_POS[code];
+      var who = npcMeta[code].who || npcMeta[code].label;
+      showWorldPrompt(p.npcX, 2.55, p.npcZ, interactKeyLabel() + '　與' + who + '對話');
+      return;
+    }
+
+    // 2) Standing in the beacon at the gate, ready to finish
+    if(finalBeacon && finalBeacon.visible){
+      showWorldPrompt(0, 2.2, GATE_Z, interactKeyLabel() + '　結案考驗');
+      return;
+    }
+
+    el.beaconPrompt.classList.remove('show');
   }
 
   function updateFinalBeacon(){
@@ -1571,7 +1631,18 @@
     window.addEventListener('resize', resizeThree);
 
     var dragging=false, lastX=0;
-    renderer.domElement.addEventListener('mousedown', function(e){dragging=true; lastX=e.clientX;});
+    // Click-to-interact: many players' first instinct is to click the character
+    // rather than press a key, so support both.
+    var pressX = 0, pressY = 0;
+    renderer.domElement.addEventListener('mousedown', function(e){
+      dragging=true; lastX=e.clientX; pressX=e.clientX; pressY=e.clientY;
+    });
+    renderer.domElement.addEventListener('click', function(e){
+      // ignore clicks that were really camera drags
+      if(Math.abs(e.clientX-pressX) > 6 || Math.abs(e.clientY-pressY) > 6) return;
+      if(state.mode !== 'playing') return;
+      handleWorldClick(e.clientX, e.clientY);
+    });
     window.addEventListener('mouseup', function(){dragging=false;});
     window.addEventListener('mousemove', function(e){
       if(!dragging) return;
@@ -1614,6 +1685,8 @@
   var joystickVec = {x:0, y:0}; // x: screen-right(-1..1), y: screen-forward(-1..1)
   var MOVE_SPEED = 6.2; // units per second
   var clock = new THREE.Clock();
+  var clickTarget = null;                 // click-to-walk destination, if any
+  var _groundPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
 
   function collidesAt(x,z){
     if(x < -WORLD_HALF_X+PLAYER_R || x > WORLD_HALF_X-PLAYER_R) return true;
@@ -1644,7 +1717,30 @@
     if(keys.left) r -= 1;
     f += joystickVec.y;
     r += joystickVec.x;
+
+    // any manual input cancels an in-progress click-to-walk
+    if(Math.abs(f) > 0.06 || Math.abs(r) > 0.06) clickTarget = null;
+
     var mag = Math.sqrt(f*f + r*r);
+
+    if(clickTarget && mag <= 0.06){
+      var tx = clickTarget.x - state.pos.x, tz = clickTarget.z - state.pos.z;
+      var tdist = Math.sqrt(tx*tx + tz*tz);
+      var stopAt = clickTarget.code !== null ? INTERACT_RADIUS * 0.75 : 0.35;
+      if(tdist <= stopAt){
+        var arrived = clickTarget;
+        clickTarget = null;
+        if(arrived.code !== null) setTimeout(interact, 60);   // walked over to talk
+      } else {
+        // convert the world-space direction back into camera-relative input
+        f = (tx*camForwardX + tz*camForwardZ);
+        r = (tx*camRightX  + tz*camRightZ);
+        var n = Math.sqrt(f*f + r*r) || 1;
+        f /= n; r /= n;
+        mag = 1;
+      }
+    }
+
     var moving = mag > 0.06;
     if(moving){
       var speedScale = Math.min(mag,1);
@@ -1775,7 +1871,7 @@
     return window.matchMedia && window.matchMedia('(hover:none) and (pointer:coarse)').matches;
   }
   function interactKeyLabel(){
-    return isTouchDevice() ? '互動鍵' : 'E';
+    return isTouchDevice() ? '按互動鍵' : '按 E';
   }
 
   function setBanner(text, progress, bump){
@@ -1808,7 +1904,7 @@
   function showMission(title, text, btnLabel, onClose){
     state.mode = 'mission';
     keys.up=keys.down=keys.left=keys.right=false;
-    joystickVec.x=0; joystickVec.y=0;
+    joystickVec.x=0; joystickVec.y=0; clickTarget=null;
     el.missionTitle.textContent = title;
     el.missionText.textContent = text;
     el.missionOk.textContent = btnLabel || '確定';
@@ -1850,6 +1946,7 @@
   }
 
   function openDialogue(code){
+    clickTarget = null;
     var meta = npcMeta[code];
     activeTalkKey = meta.talk;
     el.vnStamp.classList.remove('show');
@@ -2011,7 +2108,7 @@
   function startGame(){
     state = {pos:{x:SPAWN_POS.x, z:SPAWN_POS.z}, heading:Math.PI, completed:{}, step:0, mode:'playing'};
     evidenceLog.length = 0;
-    keys.up=keys.down=keys.left=keys.right=false; joystickVec.x=0; joystickVec.y=0;
+    keys.up=keys.down=keys.left=keys.right=false; joystickVec.x=0; joystickVec.y=0; clickTarget=null;
     showScreen('game-screen');
     initThree();
     resizeThree();   // container was hidden; make sure the canvas matches it again
@@ -2025,7 +2122,9 @@
     hideBanner();
     refreshObjective();
     showMission('任務開始',
-      '年底就要投票了，聽說清水里最近不太平靜。\n先去巷口找王姐聊聊，看看發生什麼事。',
+      (isTouchDevice()
+        ? '年底就要投票了，聽說清水里最近不太平靜。\n\n【操作方式】左下搖桿移動，走到人物旁邊按右下「互動鍵」對話。\n\n先去巷口找王姐聊聊吧。'
+        : '年底就要投票了，聽說清水里最近不太平靜。\n\n【操作方式】WASD 或方向鍵移動，走到人物旁邊按 E 對話（也可以直接用滑鼠點人物）。\n\n先去巷口找王姐聊聊吧。'),
       '出發');
   }
 
@@ -2169,7 +2268,7 @@
 
   /* ---------------- Pause ---------------- */
   function openPause(){
-    if(state.mode==='playing'){ state.mode='paused'; keys.up=keys.down=keys.left=keys.right=false; joystickVec.x=0; joystickVec.y=0; el.pauseLayer.classList.add('active'); }
+    if(state.mode==='playing'){ state.mode='paused'; keys.up=keys.down=keys.left=keys.right=false; joystickVec.x=0; joystickVec.y=0; clickTarget=null; el.pauseLayer.classList.add('active'); }
   }
   function closePause(){ el.pauseLayer.classList.remove('active'); state.mode='playing'; clock.getDelta(); }
   el.pauseToggle.addEventListener('click', openPause);
@@ -2246,9 +2345,9 @@
     else if(k==='arrowleft'||k==='a') keys.left=false;
     else if(k==='arrowright'||k==='d') keys.right=false;
   });
-  window.addEventListener('blur', function(){ keys.up=keys.down=keys.left=keys.right=false; joystickVec.x=0; joystickVec.y=0; });
+  window.addEventListener('blur', function(){ keys.up=keys.down=keys.left=keys.right=false; joystickVec.x=0; joystickVec.y=0; clickTarget=null; });
   document.addEventListener('focusin', function(e){
-    if(isTypingInField(e)){ keys.up=keys.down=keys.left=keys.right=false; joystickVec.x=0; joystickVec.y=0; }
+    if(isTypingInField(e)){ keys.up=keys.down=keys.left=keys.right=false; joystickVec.x=0; joystickVec.y=0; clickTarget=null; }
   });
 
   /* ---------------- Touch controls: virtual joystick ---------------- */
